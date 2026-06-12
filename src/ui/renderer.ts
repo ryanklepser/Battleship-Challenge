@@ -8,8 +8,6 @@ export function renderBoard(
   container: HTMLElement,
   hideShips: boolean,
   onCellClick?: (row: number, col: number) => void,
-  previewCells?: Coordinate[],
-  previewValid?: boolean,
 ): void {
   container.innerHTML = '';
 
@@ -25,10 +23,6 @@ export function renderBoard(
   }
   table.appendChild(headerRow);
 
-  const previewSet = new Set(
-    (previewCells ?? []).map((c) => `${c.row},${c.col}`),
-  );
-
   for (let row = 0; row < BOARD_SIZE; row++) {
     const tr = document.createElement('tr');
 
@@ -43,12 +37,6 @@ export function renderBoard(
       td.classList.add('cell');
       td.dataset.row = String(row);
       td.dataset.col = String(col);
-
-      if (previewSet.has(`${row},${col}`)) {
-        td.classList.add(
-          previewValid ? 'cell--preview-valid' : 'cell--preview-invalid',
-        );
-      }
 
       switch (cell.state) {
         case 'hit':
@@ -80,6 +68,26 @@ export function renderBoard(
   }
 
   container.appendChild(table);
+}
+
+export function updatePreview(
+  container: HTMLElement,
+  cells: Coordinate[],
+  valid: boolean,
+): void {
+  container.querySelectorAll('.cell--preview-valid, .cell--preview-invalid').forEach((el) => {
+    el.classList.remove('cell--preview-valid', 'cell--preview-invalid');
+  });
+
+  const previewSet = new Set(cells.map((c) => `${c.row},${c.col}`));
+
+  container.querySelectorAll('.cell').forEach((el) => {
+    const htmlEl = el as HTMLElement;
+    const key = `${htmlEl.dataset.row},${htmlEl.dataset.col}`;
+    if (previewSet.has(key)) {
+      htmlEl.classList.add(valid ? 'cell--preview-valid' : 'cell--preview-invalid');
+    }
+  });
 }
 
 export function renderStatus(state: GameState, container: HTMLElement): void {

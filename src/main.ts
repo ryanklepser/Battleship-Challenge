@@ -1,5 +1,5 @@
 import './style.css';
-import type { GameState, Difficulty, Coordinate } from './game/types';
+import type { GameState, Difficulty } from './game/types';
 import {
   renderBoard,
   renderStatus,
@@ -7,6 +7,7 @@ import {
   renderPlacementControls,
   showAttackAnimation,
   showResultPopup,
+  updatePreview,
 } from './ui/renderer';
 import {
   createGameState,
@@ -67,42 +68,13 @@ function renderGame(state: GameState): void {
   const aiBoardEl = document.querySelector<HTMLDivElement>('#ai-board')!;
   const actionsEl = document.querySelector<HTMLDivElement>('#game-actions')!;
 
-  let previewOrigin: Coordinate | null = null;
   let animating = false;
 
   function update(): void {
     renderStatus(state, statusEl);
 
     if (state.phase === 'placement') {
-      const preview = previewOrigin
-        ? getPlacementPreview(state, previewOrigin)
-        : null;
-
-      renderBoard(
-        state.playerBoard,
-        playerBoardEl,
-        false,
-        handlePlacementClick,
-        preview?.cells,
-        preview?.valid,
-      );
-
-      // Add mouseover listeners for preview
-      const cells = playerBoardEl.querySelectorAll('.cell');
-      cells.forEach((cell) => {
-        const el = cell as HTMLElement;
-        el.addEventListener('mouseenter', () => {
-          const row = parseInt(el.dataset.row ?? '0');
-          const col = parseInt(el.dataset.col ?? '0');
-          previewOrigin = { row, col };
-          update();
-        });
-        el.addEventListener('mouseleave', () => {
-          previewOrigin = null;
-          update();
-        });
-      });
-
+      renderBoard(state.playerBoard, playerBoardEl, false, handlePlacementClick);
       renderBoard(state.aiBoard, aiBoardEl, true);
 
       renderPlacementControls(
@@ -121,7 +93,6 @@ function renderGame(state: GameState): void {
 
       actionsEl.innerHTML = '';
     } else {
-      // gameover
       renderBoard(state.playerBoard, playerBoardEl, false);
       renderBoard(state.aiBoard, aiBoardEl, false);
 
@@ -129,16 +100,42 @@ function renderGame(state: GameState): void {
     }
   }
 
+  function showPreview(row: number, col: number): void {
+    if (state.phase !== 'placement') return;
+    const preview = getPlacementPreview(state, { row, col });
+    updatePreview(playerBoardEl, preview.cells, preview.valid);
+  }
+
+  function clearPreview(): void {
+    updatePreview(playerBoardEl, [], false);
+  }
+
+  playerBoardEl.addEventListener('mouseover', (e) => {
+    const cell = (e.target as HTMLElement).closest('.cell') as HTMLElement | null;
+    if (cell) {
+      const row = parseInt(cell.dataset.row ?? '0');
+      const col = parseInt(cell.dataset.col ?? '0');
+      showPreview(row, col);
+    }
+  }, { signal });
+
+  playerBoardEl.addEventListener('mouseout', (e) => {
+    const related = (e as MouseEvent).relatedTarget as HTMLElement | null;
+    if (!related || !playerBoardEl.contains(related)) {
+      clearPreview();
+    }
+  }, { signal });
+
   function handlePlacementClick(row: number, col: number): void {
     const placed = placeCurrentShip(state, { row, col });
     if (placed) {
-      previewOrigin = null;
       update();
     }
   }
 
   function handleRotate(): void {
     rotateCurrentShip(state);
+    clearPreview();
     update();
   }
 
