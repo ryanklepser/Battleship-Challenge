@@ -33,6 +33,11 @@ export type GamePhase = 'placement' | 'battle' | 'gameover';
 
 export type AttackResult = 'hit' | 'miss' | 'sunk';
 
+export interface PlacementState {
+  currentShipIndex: number;
+  orientation: Orientation;
+}
+
 export interface GameState {
   phase: GamePhase;
   playerBoard: Board;
@@ -42,6 +47,7 @@ export interface GameState {
   isPlayerTurn: boolean;
   difficulty: Difficulty;
   winner: 'player' | 'ai' | null;
+  placement: PlacementState | null;
 }
 
 export const BOARD_SIZE = 10;

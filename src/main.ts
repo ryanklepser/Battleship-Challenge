@@ -1,16 +1,31 @@
 import './style.css';
-import type { GameState, Difficulty } from './game/types';
-import { renderBoard, renderStatus, renderDifficultySelector } from './ui/renderer';
-import { createGameState, playerAttack, aiAttack } from './game/engine';
+import type { GameState, Difficulty, Coordinate } from './game/types';
+import {
+  renderBoard,
+  renderStatus,
+  renderDifficultySelector,
+  renderPlacementControls,
+  showAttackAnimation,
+  showResultPopup,
+} from './ui/renderer';
+import {
+  createGameState,
+  playerAttack,
+  aiAttack,
+  rotateCurrentShip,
+  placeCurrentShip,
+  getPlacementPreview,
+} from './game/engine';
 import { formatCoordinate } from './utils/helpers';
 
 const app = document.querySelector<HTMLDivElement>('#app')!;
+let gameAbort: AbortController | null = null;
 
 function showMenu(): void {
   app.innerHTML = `
     <header class="header">
-      <h1>⚓ Battleship Challenge</h1>
-      <p>Sink the enemy fleet before they sink yours!</p>
+      <h1>⚓ Battlefield</h1>
+      <p>Sink Devin's fleet before Devin sinks yours!</p>
     </header>
     <main id="game-root"></main>
   `;
@@ -25,19 +40,22 @@ function startGame(difficulty: Difficulty): void {
 }
 
 function renderGame(state: GameState): void {
+  if (gameAbort) gameAbort.abort();
+  gameAbort = new AbortController();
+  const { signal } = gameAbort;
+
   app.innerHTML = `
     <header class="header">
-      <h1>⚓ Battleship Challenge</h1>
+      <h1>⚓ Battlefield</h1>
     </header>
     <div id="status" class="status"></div>
-    <div id="log" class="log"></div>
     <div class="boards">
       <div class="board-wrapper">
         <h2 class="board-title">Your Fleet</h2>
         <div id="player-board"></div>
       </div>
       <div class="board-wrapper">
-        <h2 class="board-title">Enemy Waters</h2>
+        <h2 class="board-title">Devin's Waters</h2>
         <div id="ai-board"></div>
       </div>
     </div>
@@ -45,66 +63,143 @@ function renderGame(state: GameState): void {
   `;
 
   const statusEl = document.querySelector<HTMLDivElement>('#status')!;
-  const logEl = document.querySelector<HTMLDivElement>('#log')!;
   const playerBoardEl = document.querySelector<HTMLDivElement>('#player-board')!;
   const aiBoardEl = document.querySelector<HTMLDivElement>('#ai-board')!;
   const actionsEl = document.querySelector<HTMLDivElement>('#game-actions')!;
 
-  function addLogEntry(message: string): void {
-    const entry = document.createElement('div');
-    entry.classList.add('log-entry');
-    entry.textContent = message;
-    logEl.prepend(entry);
-
-    while (logEl.children.length > 8) {
-      logEl.removeChild(logEl.lastChild!);
-    }
-  }
+  let previewOrigin: Coordinate | null = null;
+  let animating = false;
 
   function update(): void {
     renderStatus(state, statusEl);
 
-    renderBoard(state.playerBoard, playerBoardEl, false);
+    if (state.phase === 'placement') {
+      const preview = previewOrigin
+        ? getPlacementPreview(state, previewOrigin)
+        : null;
 
-    if (state.phase === 'battle') {
-      renderBoard(state.aiBoard, aiBoardEl, true, handlePlayerClick);
+      renderBoard(
+        state.playerBoard,
+        playerBoardEl,
+        false,
+        handlePlacementClick,
+        preview?.cells,
+        preview?.valid,
+      );
+
+      // Add mouseover listeners for preview
+      const cells = playerBoardEl.querySelectorAll('.cell');
+      cells.forEach((cell) => {
+        const el = cell as HTMLElement;
+        el.addEventListener('mouseenter', () => {
+          const row = parseInt(el.dataset.row ?? '0');
+          const col = parseInt(el.dataset.col ?? '0');
+          previewOrigin = { row, col };
+          update();
+        });
+        el.addEventListener('mouseleave', () => {
+          previewOrigin = null;
+          update();
+        });
+      });
+
+      renderBoard(state.aiBoard, aiBoardEl, true);
+
+      renderPlacementControls(
+        actionsEl,
+        state.placement?.orientation ?? 'horizontal',
+        handleRotate,
+      );
+    } else if (state.phase === 'battle') {
+      renderBoard(state.playerBoard, playerBoardEl, false);
+
+      if (!animating) {
+        renderBoard(state.aiBoard, aiBoardEl, true, handlePlayerClick);
+      } else {
+        renderBoard(state.aiBoard, aiBoardEl, true);
+      }
+
+      actionsEl.innerHTML = '';
     } else {
-      renderBoard(state.aiBoard, aiBoardEl, state.phase !== 'gameover');
-    }
+      // gameover
+      renderBoard(state.playerBoard, playerBoardEl, false);
+      renderBoard(state.aiBoard, aiBoardEl, false);
 
-    if (state.phase === 'gameover') {
       renderGameOver(actionsEl);
     }
   }
 
-  function handlePlayerClick(row: number, col: number): void {
-    const result = playerAttack(state, { row, col });
-    if (!result) return;
-
-    const coord = formatCoordinate(result.target);
-    if (result.result === 'sunk') {
-      addLogEntry(`You fired at ${coord} — ${result.sunkShipName} SUNK!`);
-    } else {
-      addLogEntry(`You fired at ${coord} — ${result.result.toUpperCase()}`);
-    }
-
-    update();
-
-    if (!result.gameOver) {
-      runAITurn();
+  function handlePlacementClick(row: number, col: number): void {
+    const placed = placeCurrentShip(state, { row, col });
+    if (placed) {
+      previewOrigin = null;
+      update();
     }
   }
 
-  function runAITurn(): void {
-    aiAttack(state, (result) => {
-      const coord = formatCoordinate(result.target);
-      if (result.result === 'sunk') {
-        addLogEntry(`AI fired at ${coord} — ${result.sunkShipName} SUNK!`);
-      } else {
-        addLogEntry(`AI fired at ${coord} — ${result.result.toUpperCase()}`);
-      }
+  function handleRotate(): void {
+    rotateCurrentShip(state);
+    update();
+  }
 
-      update();
+  function handlePlayerClick(row: number, col: number): void {
+    if (animating) return;
+
+    const result = playerAttack(state, { row, col });
+    if (!result) return;
+
+    animating = true;
+    update();
+
+    showAttackAnimation(
+      aiBoardEl,
+      row,
+      col,
+      result.result !== 'miss',
+      () => {
+        const coord = formatCoordinate(result.target);
+        if (result.result === 'sunk') {
+          showResultPopup('sunk', result.sunkShipName);
+        } else {
+          showResultPopup(result.result);
+        }
+
+        animating = false;
+        update();
+
+        if (!result.gameOver) {
+          runAITurn();
+        }
+
+        void coord;
+      },
+    );
+  }
+
+  function runAITurn(): void {
+    animating = true;
+    update();
+
+    aiAttack(state, (result) => {
+      showAttackAnimation(
+        playerBoardEl,
+        result.target.row,
+        result.target.col,
+        result.result !== 'miss',
+        () => {
+          const coord = formatCoordinate(result.target);
+          if (result.result === 'sunk') {
+            showResultPopup('sunk', result.sunkShipName);
+          } else {
+            showResultPopup(result.result);
+          }
+
+          animating = false;
+          update();
+
+          void coord;
+        },
+      );
     });
   }
 
@@ -116,6 +211,14 @@ function renderGame(state: GameState): void {
     btn.addEventListener('click', showMenu);
     container.appendChild(btn);
   }
+
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'r' || e.key === 'R') {
+      if (state.phase === 'placement') {
+        handleRotate();
+      }
+    }
+  }, { signal });
 
   update();
 }
