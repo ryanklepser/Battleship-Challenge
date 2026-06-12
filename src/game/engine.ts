@@ -10,6 +10,8 @@ import {
   createShip,
   attack,
   allShipsSunk,
+  isValidPlacement,
+  placeShip,
 } from './board';
 import { placeShipsRandomly } from '../ai/placement';
 import { getAIMove } from '../ai/strategy';
@@ -22,11 +24,10 @@ export function createGameState(difficulty: Difficulty): GameState {
   const playerShips = SHIP_DEFINITIONS.map((d) => createShip(d.name, d.size));
   const aiShips = SHIP_DEFINITIONS.map((d) => createShip(d.name, d.size));
 
-  placeShipsRandomly(playerBoard, playerShips);
   placeShipsRandomly(aiBoard, aiShips);
 
   return {
-    phase: 'battle',
+    phase: 'placement',
     playerBoard,
     aiBoard,
     playerShips,
@@ -34,7 +35,68 @@ export function createGameState(difficulty: Difficulty): GameState {
     isPlayerTurn: true,
     difficulty,
     winner: null,
+    placement: {
+      currentShipIndex: 0,
+      orientation: 'horizontal',
+    },
   };
+}
+
+export function rotateCurrentShip(state: GameState): void {
+  if (!state.placement) return;
+  state.placement.orientation =
+    state.placement.orientation === 'horizontal' ? 'vertical' : 'horizontal';
+}
+
+export function placeCurrentShip(
+  state: GameState,
+  origin: Coordinate,
+): boolean {
+  if (!state.placement || state.phase !== 'placement') return false;
+
+  const ship = state.playerShips[state.placement.currentShipIndex];
+  const orientation = state.placement.orientation;
+
+  if (!isValidPlacement(state.playerBoard, origin, ship.size, orientation)) {
+    return false;
+  }
+
+  placeShip(state.playerBoard, ship, origin, orientation);
+
+  state.placement.currentShipIndex++;
+
+  if (state.placement.currentShipIndex >= state.playerShips.length) {
+    state.phase = 'battle';
+    state.placement = null;
+  }
+
+  return true;
+}
+
+export function getPlacementPreview(
+  state: GameState,
+  origin: Coordinate,
+): { cells: Coordinate[]; valid: boolean } {
+  if (!state.placement) return { cells: [], valid: false };
+
+  const ship = state.playerShips[state.placement.currentShipIndex];
+  const orientation = state.placement.orientation;
+  const cells: Coordinate[] = [];
+
+  for (let i = 0; i < ship.size; i++) {
+    const row = orientation === 'vertical' ? origin.row + i : origin.row;
+    const col = orientation === 'horizontal' ? origin.col + i : origin.col;
+    cells.push({ row, col });
+  }
+
+  const valid = isValidPlacement(
+    state.playerBoard,
+    origin,
+    ship.size,
+    orientation,
+  );
+
+  return { cells, valid };
 }
 
 export interface TurnResult {
