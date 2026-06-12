@@ -19,6 +19,7 @@ import {
 import { formatCoordinate } from './utils/helpers';
 
 const app = document.querySelector<HTMLDivElement>('#app')!;
+let gameAbort: AbortController | null = null;
 
 function showMenu(): void {
   app.innerHTML = `
@@ -39,6 +40,10 @@ function startGame(difficulty: Difficulty): void {
 }
 
 function renderGame(state: GameState): void {
+  if (gameAbort) gameAbort.abort();
+  gameAbort = new AbortController();
+  const { signal } = gameAbort;
+
   app.innerHTML = `
     <header class="header">
       <h1>⚓ Battlefield</h1>
@@ -207,14 +212,13 @@ function renderGame(state: GameState): void {
     container.appendChild(btn);
   }
 
-  // Keyboard shortcut for rotation
   document.addEventListener('keydown', (e) => {
     if (e.key === 'r' || e.key === 'R') {
       if (state.phase === 'placement') {
         handleRotate();
       }
     }
-  });
+  }, { signal });
 
   update();
 }

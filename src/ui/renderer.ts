@@ -192,10 +192,13 @@ export function showAttackAnimation(
       explosion.style.top = `${rect.top - boardRect.top + rect.height / 2 - 24}px`;
       boardEl.appendChild(explosion);
 
-      setTimeout(() => explosion.remove(), 600);
+      setTimeout(() => {
+        explosion.remove();
+        onComplete();
+      }, 600);
+    } else {
+      onComplete();
     }
-
-    onComplete();
   }, 400);
 }
 
