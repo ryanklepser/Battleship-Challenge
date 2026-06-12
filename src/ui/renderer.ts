@@ -1,13 +1,41 @@
-import type { Board, GameState, Coordinate } from '../game/types';
+import type { Board, GameState, Coordinate, Ship } from '../game/types';
 import { BOARD_SIZE, SHIP_DEFINITIONS } from '../game/types';
 
 const COL_LABELS = 'ABCDEFGHIJ';
+
+const SHIP_SVGS: Record<string, string> = {
+  Carrier: `<svg viewBox="0 0 5 1" class="ship-svg"><rect x="0.1" y="0.15" width="4.8" height="0.7" rx="0.25" fill="#7f8c8d"/><rect x="0.5" y="0.05" width="0.6" height="0.9" rx="0.15" fill="#95a5a6"/><rect x="1.4" y="0.1" width="0.4" height="0.8" rx="0.1" fill="#95a5a6"/><rect x="2.1" y="0.1" width="0.4" height="0.8" rx="0.1" fill="#95a5a6"/><rect x="2.8" y="0.1" width="0.4" height="0.8" rx="0.1" fill="#95a5a6"/><rect x="3.6" y="0.05" width="0.8" height="0.9" rx="0.15" fill="#95a5a6"/></svg>`,
+  Battleship: `<svg viewBox="0 0 4 1" class="ship-svg"><rect x="0.15" y="0.2" width="3.7" height="0.6" rx="0.2" fill="#7f8c8d"/><rect x="0.4" y="0.1" width="0.5" height="0.8" rx="0.15" fill="#95a5a6"/><circle cx="1.5" cy="0.5" r="0.25" fill="#bdc3c7"/><circle cx="2.3" cy="0.5" r="0.25" fill="#bdc3c7"/><rect x="2.9" y="0.05" width="0.7" height="0.9" rx="0.15" fill="#95a5a6"/></svg>`,
+  Cruiser: `<svg viewBox="0 0 3 1" class="ship-svg"><rect x="0.1" y="0.2" width="2.8" height="0.6" rx="0.2" fill="#7f8c8d"/><rect x="0.3" y="0.1" width="0.5" height="0.8" rx="0.15" fill="#95a5a6"/><circle cx="1.5" cy="0.5" r="0.25" fill="#bdc3c7"/><rect x="2.0" y="0.1" width="0.6" height="0.8" rx="0.15" fill="#95a5a6"/></svg>`,
+  Submarine: `<svg viewBox="0 0 3 1" class="ship-svg"><ellipse cx="1.5" cy="0.5" rx="1.4" ry="0.4" fill="#7f8c8d"/><rect x="1.2" y="0.05" width="0.3" height="0.5" rx="0.1" fill="#95a5a6"/><circle cx="0.6" cy="0.5" r="0.15" fill="#bdc3c7"/><circle cx="2.4" cy="0.5" r="0.15" fill="#bdc3c7"/></svg>`,
+  Destroyer: `<svg viewBox="0 0 2 1" class="ship-svg"><rect x="0.1" y="0.25" width="1.8" height="0.5" rx="0.2" fill="#7f8c8d"/><rect x="0.3" y="0.15" width="0.4" height="0.7" rx="0.1" fill="#95a5a6"/><rect x="1.1" y="0.1" width="0.5" height="0.8" rx="0.15" fill="#95a5a6"/></svg>`,
+};
+
+function getShipCellIndex(
+  ships: Ship[],
+  shipName: string,
+  row: number,
+  col: number,
+): { index: number; total: number; orientation: 'horizontal' | 'vertical' } | null {
+  const ship = ships.find((s) => s.name === shipName);
+  if (!ship || ship.coordinates.length === 0) return null;
+
+  const idx = ship.coordinates.findIndex((c) => c.row === row && c.col === col);
+  if (idx === -1) return null;
+
+  const isHorizontal =
+    ship.coordinates.length === 1 ||
+    ship.coordinates[0].row === ship.coordinates[1].row;
+
+  return { index: idx, total: ship.size, orientation: isHorizontal ? 'horizontal' : 'vertical' };
+}
 
 export function renderBoard(
   board: Board,
   container: HTMLElement,
   hideShips: boolean,
   onCellClick?: (row: number, col: number) => void,
+  ships?: Ship[],
 ): void {
   container.innerHTML = '';
 
@@ -50,6 +78,21 @@ export function renderBoard(
         case 'ship':
           if (!hideShips) {
             td.classList.add('cell--ship');
+            if (ships && cell.shipName) {
+              const info = getShipCellIndex(ships, cell.shipName, row, col);
+              if (info && info.index === 0 && SHIP_SVGS[cell.shipName]) {
+                const wrapper = document.createElement('div');
+                wrapper.classList.add('ship-shape');
+                wrapper.classList.add(
+                  info.orientation === 'vertical' ? 'ship-shape--vertical' : 'ship-shape--horizontal',
+                );
+                wrapper.style.width = `${info.total * 36}px`;
+                wrapper.style.height = '36px';
+                wrapper.innerHTML = SHIP_SVGS[cell.shipName];
+                td.appendChild(wrapper);
+                td.classList.add('cell--ship-origin');
+              }
+            }
           }
           break;
         case 'empty':
@@ -105,7 +148,7 @@ export function renderStatus(state: GameState, container: HTMLElement): void {
   } else {
     container.textContent = state.isPlayerTurn
       ? "Your turn — click a cell on Devin's board"
-      : 'Devin is thinking…';
+      : '\u00A0';
   }
 }
 
@@ -162,52 +205,80 @@ export function renderPlacementControls(
 }
 
 export function showAttackAnimation(
-  boardEl: HTMLElement,
+  sourceBoardEl: HTMLElement,
+  targetBoardEl: HTMLElement,
   row: number,
   col: number,
   isHit: boolean,
   onComplete: () => void,
 ): void {
-  const cell = boardEl.querySelector(
+  const targetCell = targetBoardEl.querySelector(
     `[data-row="${row}"][data-col="${col}"]`,
   ) as HTMLElement | null;
-  if (!cell) {
+  if (!targetCell) {
     onComplete();
     return;
   }
 
-  const rect = cell.getBoundingClientRect();
-  const boardRect = boardEl.getBoundingClientRect();
+  const targetRect = targetCell.getBoundingClientRect();
+  const sourceRect = sourceBoardEl.getBoundingClientRect();
+
+  const startX = sourceRect.left + sourceRect.width / 2;
+  const startY = sourceRect.top + sourceRect.height / 2;
+  const endX = targetRect.left + targetRect.width / 2;
+  const endY = targetRect.top + targetRect.height / 2;
 
   const missile = document.createElement('div');
-  missile.classList.add('missile');
-  missile.style.left = `${rect.left - boardRect.left + rect.width / 2 - 8}px`;
-  missile.style.top = '-40px';
-  boardEl.style.position = 'relative';
-  boardEl.appendChild(missile);
+  missile.classList.add('missile-arc');
+  document.body.appendChild(missile);
 
-  requestAnimationFrame(() => {
-    missile.style.top = `${rect.top - boardRect.top + rect.height / 2 - 8}px`;
-  });
+  const duration = 600;
+  const startTime = performance.now();
+  const peakHeight = 120;
 
-  setTimeout(() => {
-    missile.remove();
+  function animate(now: number): void {
+    const elapsed = now - startTime;
+    const t = Math.min(elapsed / duration, 1);
 
-    if (isHit) {
-      const explosion = document.createElement('div');
-      explosion.classList.add('explosion');
-      explosion.style.left = `${rect.left - boardRect.left + rect.width / 2 - 24}px`;
-      explosion.style.top = `${rect.top - boardRect.top + rect.height / 2 - 24}px`;
-      boardEl.appendChild(explosion);
+    const x = startX + (endX - startX) * t;
+    const parabola = -4 * peakHeight * t * (t - 1);
+    const y = startY + (endY - startY) * t - parabola;
 
-      setTimeout(() => {
-        explosion.remove();
-        onComplete();
-      }, 600);
+    missile.style.left = `${x - 8}px`;
+    missile.style.top = `${y - 8}px`;
+
+    const angle = Math.atan2(
+      (endY - startY) - peakHeight * (2 - 4 * t),
+      (endX - startX),
+    );
+    missile.style.transform = `rotate(${angle}rad)`;
+
+    if (t < 1) {
+      requestAnimationFrame(animate);
     } else {
-      onComplete();
+      missile.remove();
+
+      if (isHit) {
+        const boardRect = targetBoardEl.getBoundingClientRect();
+        targetBoardEl.style.position = 'relative';
+
+        const explosion = document.createElement('div');
+        explosion.classList.add('explosion');
+        explosion.style.left = `${targetRect.left - boardRect.left + targetRect.width / 2 - 24}px`;
+        explosion.style.top = `${targetRect.top - boardRect.top + targetRect.height / 2 - 24}px`;
+        targetBoardEl.appendChild(explosion);
+
+        setTimeout(() => {
+          explosion.remove();
+          onComplete();
+        }, 600);
+      } else {
+        onComplete();
+      }
     }
-  }, 400);
+  }
+
+  requestAnimationFrame(animate);
 }
 
 export function showResultPopup(
