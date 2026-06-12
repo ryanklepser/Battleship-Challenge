@@ -1,0 +1,142 @@
+:root {
+  --color-ocean: #0a1628;
+  --color-ocean-light: #1a2a4a;
+  --color-hit: #e74c3c;
+  --color-miss: #95a5a6;
+  --color-ship: #3498db;
+  --color-text: #ecf0f1;
+  --color-accent: #f39c12;
+  --board-gap: 2px;
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  background-color: var(--color-ocean);
+  color: var(--color-text);
+  min-height: 100vh;
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  padding: 2rem;
+}
+
+#app {
+  max-width: 960px;
+  width: 100%;
+}
+
+.header {
+  text-align: center;
+  margin-bottom: 2rem;
+}
+
+.header h1 {
+  font-size: 2.5rem;
+  margin-bottom: 0.5rem;
+}
+
+.header p {
+  color: var(--color-miss);
+  font-size: 1.1rem;
+}
+
+/* Board */
+.board {
+  border-collapse: collapse;
+  margin: 0 auto;
+}
+
+.board th {
+  width: 40px;
+  height: 40px;
+  text-align: center;
+  font-weight: 600;
+  color: var(--color-accent);
+}
+
+.cell {
+  width: 40px;
+  height: 40px;
+  text-align: center;
+  vertical-align: middle;
+  border: 1px solid var(--color-ocean-light);
+  background: var(--color-ocean-light);
+  font-size: 1.2rem;
+  transition: background 0.2s;
+}
+
+.cell--clickable {
+  cursor: pointer;
+}
+
+.cell--clickable:hover {
+  background: rgba(52, 152, 219, 0.3);
+}
+
+.cell--ship {
+  background: var(--color-ship);
+}
+
+.cell--hit {
+  background: var(--color-hit);
+}
+
+.cell--miss {
+  background: var(--color-ocean);
+}
+
+/* Status */
+.status--gameover {
+  font-size: 1.8rem;
+  font-weight: 700;
+  text-align: center;
+  padding: 1rem;
+}
+
+/* Difficulty Selector */
+.difficulty-selector {
+  text-align: center;
+  padding: 2rem;
+}
+
+.difficulty-selector h2 {
+  margin-bottom: 1.5rem;
+  font-size: 1.6rem;
+}
+
+.btn {
+  display: inline-block;
+  padding: 0.75rem 2rem;
+  margin: 0.5rem;
+  border: 2px solid transparent;
+  border-radius: 8px;
+  font-size: 1.1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: transform 0.15s, box-shadow 0.15s;
+  color: var(--color-text);
+  background: var(--color-ocean-light);
+}
+
+.btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+}
+
+.btn--easy {
+  border-color: #2ecc71;
+}
+
+.btn--medium {
+  border-color: var(--color-accent);
+}
+
+.btn--expert {
+  border-color: var(--color-hit);
+}
