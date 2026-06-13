@@ -18,11 +18,19 @@ import {
   getPlacementPreview,
 } from './game/engine';
 import { formatCoordinate } from './utils/helpers';
+import {
+  mountMascot,
+  removeMascot,
+  updateMascotForPhase,
+  mascotReactToHit,
+  mascotReactToMiss,
+} from './ui/mascot';
 
 const app = document.querySelector<HTMLDivElement>('#app')!;
 let gameAbort: AbortController | null = null;
 
 function showMenu(): void {
+  removeMascot();
   app.innerHTML = `
     <header class="header">
       <h1>⚓ Battlefield</h1>
@@ -68,10 +76,14 @@ function renderGame(state: GameState): void {
   const aiBoardEl = document.querySelector<HTMLDivElement>('#ai-board')!;
   const actionsEl = document.querySelector<HTMLDivElement>('#game-actions')!;
 
+  mountMascot(document.body);
+  updateMascotForPhase(state.phase, state.winner);
+
   let animating = false;
 
   function update(): void {
     renderStatus(state, statusEl);
+    updateMascotForPhase(state.phase, state.winner);
 
     if (state.phase === 'placement') {
       renderBoard(state.playerBoard, playerBoardEl, false, handlePlacementClick, state.playerShips);
@@ -162,6 +174,12 @@ function renderGame(state: GameState): void {
           showResultPopup(result.result);
         }
 
+        if (result.result === 'miss') {
+          mascotReactToMiss(true);
+        } else {
+          mascotReactToHit(true);
+        }
+
         animating = false;
         update();
 
@@ -191,6 +209,12 @@ function renderGame(state: GameState): void {
             showResultPopup('sunk', result.sunkShipName);
           } else {
             showResultPopup(result.result);
+          }
+
+          if (result.result === 'miss') {
+            mascotReactToMiss(false);
+          } else {
+            mascotReactToHit(false);
           }
 
           animating = false;
