@@ -74,7 +74,7 @@ function renderGame(state: GameState): void {
     renderStatus(state, statusEl);
 
     if (state.phase === 'placement') {
-      renderBoard(state.playerBoard, playerBoardEl, false, handlePlacementClick);
+      renderBoard(state.playerBoard, playerBoardEl, false, handlePlacementClick, state.playerShips);
       renderBoard(state.aiBoard, aiBoardEl, true);
 
       renderPlacementControls(
@@ -83,7 +83,7 @@ function renderGame(state: GameState): void {
         handleRotate,
       );
     } else if (state.phase === 'battle') {
-      renderBoard(state.playerBoard, playerBoardEl, false);
+      renderBoard(state.playerBoard, playerBoardEl, false, undefined, state.playerShips);
 
       if (!animating) {
         renderBoard(state.aiBoard, aiBoardEl, true, handlePlayerClick);
@@ -93,8 +93,8 @@ function renderGame(state: GameState): void {
 
       actionsEl.innerHTML = '';
     } else {
-      renderBoard(state.playerBoard, playerBoardEl, false);
-      renderBoard(state.aiBoard, aiBoardEl, false);
+      renderBoard(state.playerBoard, playerBoardEl, false, undefined, state.playerShips);
+      renderBoard(state.aiBoard, aiBoardEl, false, undefined, state.aiShips);
 
       renderGameOver(actionsEl);
     }
@@ -149,6 +149,7 @@ function renderGame(state: GameState): void {
     update();
 
     showAttackAnimation(
+      playerBoardEl,
       aiBoardEl,
       row,
       col,
@@ -179,6 +180,7 @@ function renderGame(state: GameState): void {
 
     aiAttack(state, (result) => {
       showAttackAnimation(
+        aiBoardEl,
         playerBoardEl,
         result.target.row,
         result.target.col,
