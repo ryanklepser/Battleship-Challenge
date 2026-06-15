@@ -1852,11 +1852,11 @@ body {
   }
 
   .result-popup--visible {
-    transform: translate(-50%, -50%) scale(1);
+    transform: translateX(-50%) scale(1);
   }
 
   .result-popup--fade {
-    transform: translate(-50%, -50%) scale(1);
+    transform: translateX(-50%) scale(1);
   }
 
   .mascot--idle,
