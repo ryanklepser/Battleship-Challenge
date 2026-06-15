@@ -11,7 +11,7 @@
   --color-glow: rgba(96, 165, 250, 0.12);
   --font-display: 'Rajdhani', sans-serif;
   --font-body: 'Inter', sans-serif;
-  --cell-size: clamp(28px, calc((100vh - 180px) / 12), 44px);
+  --cell-size: clamp(28px, calc((100vh - 260px) / 12), 40px);
 }
 
 * {
