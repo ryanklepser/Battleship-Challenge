@@ -76,6 +76,9 @@ function cellStateLabel(state: string, shipName: string | null, hideShips: boole
 }
 
 function getCellSize(): number {
+  const val = getComputedStyle(document.documentElement).getPropertyValue('--cell-size');
+  const parsed = parseFloat(val);
+  if (!isNaN(parsed) && parsed > 0) return parsed;
   if (window.innerWidth <= 420) return 26;
   if (window.innerWidth <= 768) return 28;
   return 30;
