@@ -65,6 +65,14 @@ function addCrosshairListeners(table: HTMLTableElement): void {
   });
 }
 
+function cellStateLabel(state: string, shipName: string | null, hideShips: boolean): string {
+  switch (state) {
+    case 'hit': return 'hit';
+    case 'miss': return 'miss';
+    case 'ship': return hideShips ? 'empty' : `ship${shipName ? `, ${shipName}` : ''}`;
+    default: return 'empty';
+  }
+}
 export function renderBoard(
   board: Board,
   container: HTMLElement,
@@ -76,11 +84,16 @@ export function renderBoard(
 
   const table = document.createElement('table');
   table.classList.add('board');
+  table.setAttribute('role', 'grid');
 
   const headerRow = document.createElement('tr');
-  headerRow.appendChild(document.createElement('th'));
+  headerRow.setAttribute('role', 'row');
+  const emptyTh = document.createElement('th');
+  emptyTh.setAttribute('role', 'columnheader');
+  headerRow.appendChild(emptyTh);
   for (let col = 0; col < BOARD_SIZE; col++) {
     const th = document.createElement('th');
+    th.setAttribute('role', 'columnheader');
     th.textContent = COL_LABELS[col];
     headerRow.appendChild(th);
   }
@@ -88,8 +101,11 @@ export function renderBoard(
 
   for (let row = 0; row < BOARD_SIZE; row++) {
     const tr = document.createElement('tr');
+    tr.setAttribute('role', 'row');
 
     const rowLabel = document.createElement('th');
+    rowLabel.setAttribute('role', 'rowheader');
+    rowLabel.setAttribute('scope', 'row');
     rowLabel.textContent = String(row + 1);
     tr.appendChild(rowLabel);
 
@@ -98,26 +114,63 @@ export function renderBoard(
       const cell = board[row][col];
 
       td.classList.add('cell');
+      td.setAttribute('role', 'gridcell');
       td.dataset.row = String(row);
       td.dataset.col = String(col);
 
+      const coordLabel = `${COL_LABELS[col]}${row + 1}`;
+      const stateLabel = cellStateLabel(cell.state, cell.shipName, hideShips);
+      td.setAttribute('aria-label', `Cell ${coordLabel}, ${stateLabel}`);
+
       switch (cell.state) {
-        case 'hit':
+        case 'hit': {
           td.classList.add('cell--hit');
-          td.textContent = '💥';
+          const emoji = document.createElement('span');
+          emoji.setAttribute('aria-hidden', 'true');
+          emoji.textContent = '💥';
+          td.appendChild(emoji);
+          const icon = document.createElement('span');
+          icon.classList.add('cell-icon', 'cell-icon--hit');
+          icon.setAttribute('aria-hidden', 'true');
+          icon.textContent = '✕';
+          td.appendChild(icon);
+          const sr = document.createElement('span');
+          sr.classList.add('sr-only');
+          sr.textContent = 'Hit';
+          td.appendChild(sr);
           break;
-        case 'miss':
+        }
+        case 'miss': {
           td.classList.add('cell--miss');
-          td.textContent = '•';
+          const bullet = document.createElement('span');
+          bullet.setAttribute('aria-hidden', 'true');
+          bullet.textContent = '•';
+          td.appendChild(bullet);
+          const icon = document.createElement('span');
+          icon.classList.add('cell-icon', 'cell-icon--miss');
+          icon.setAttribute('aria-hidden', 'true');
+          icon.textContent = '○';
+          td.appendChild(icon);
+          const sr = document.createElement('span');
+          sr.classList.add('sr-only');
+          sr.textContent = 'Miss';
+          td.appendChild(sr);
           break;
+        }
         case 'ship':
           if (!hideShips) {
             td.classList.add('cell--ship');
+            const shipIcon = document.createElement('span');
+            shipIcon.classList.add('cell-icon', 'cell-icon--ship');
+            shipIcon.setAttribute('aria-hidden', 'true');
+            shipIcon.textContent = '▪';
+            td.appendChild(shipIcon);
             if (ships && cell.shipName) {
               const info = getShipCellIndex(ships, cell.shipName, row, col);
               if (info && info.index === 0 && SHIP_SVGS[cell.shipName]) {
                 const wrapper = document.createElement('div');
                 wrapper.classList.add('ship-shape');
+                wrapper.setAttribute('aria-hidden', 'true');
                 wrapper.classList.add(
                   info.orientation === 'vertical' ? 'ship-shape--vertical' : 'ship-shape--horizontal',
                 );
@@ -137,6 +190,7 @@ export function renderBoard(
       if (onCellClick) {
         td.addEventListener('click', () => onCellClick(row, col));
         td.classList.add('cell--clickable');
+        td.setAttribute('tabindex', '0');
       }
 
       tr.appendChild(td);
@@ -174,10 +228,17 @@ export function updatePreview(
 
 export function renderStatus(state: GameState, container: HTMLElement): void {
   container.classList.remove('status--gameover');
+  container.setAttribute('role', 'status');
+  container.setAttribute('aria-live', 'polite');
 
   if (state.phase === 'gameover') {
-    container.textContent =
-      state.winner === 'player' ? '🎉 You Win!' : '💀 Devin Wins!';
+    const emoji = document.createElement('span');
+    emoji.setAttribute('aria-hidden', 'true');
+    emoji.textContent = state.winner === 'player' ? '🎉 ' : '💀 ';
+    const text = state.winner === 'player' ? 'You Win!' : 'Devin Wins!';
+    container.textContent = '';
+    container.appendChild(emoji);
+    container.appendChild(document.createTextNode(text));
     container.classList.add('status--gameover');
   } else if (state.phase === 'placement') {
     if (state.placement) {
@@ -219,10 +280,11 @@ export function renderDifficultySelector(
     value: 'easy' | 'medium' | 'expert';
     label: string;
     tooltip: string;
+    srLabel: string;
   }> = [
-    { value: 'easy', label: '🟢 Easy', tooltip: 'Random shots — good for learning' },
-    { value: 'medium', label: '🟡 Medium', tooltip: 'Hunts adjacent cells — a real fight' },
-    { value: 'expert', label: '🔴 Expert', tooltip: 'Parity strategy — plays to win' },
+    { value: 'easy', label: '🟢 Easy', tooltip: 'Random shots — good for learning', srLabel: 'Easy difficulty' },
+    { value: 'medium', label: '🟡 Medium', tooltip: 'Hunts adjacent cells — a real fight', srLabel: 'Medium difficulty' },
+    { value: 'expert', label: '🔴 Expert', tooltip: 'Parity strategy — plays to win', srLabel: 'Expert difficulty' },
   ];
 
   for (const diff of difficulties) {
@@ -230,7 +292,12 @@ export function renderDifficultySelector(
     btnWrapper.classList.add('btn-wrapper');
 
     const btn = document.createElement('button');
-    btn.textContent = diff.label;
+    const emoji = document.createElement('span');
+    emoji.setAttribute('aria-hidden', 'true');
+    emoji.textContent = diff.label.slice(0, 2) + ' ';
+    btn.appendChild(emoji);
+    btn.appendChild(document.createTextNode(diff.label.slice(3)));
+    btn.setAttribute('aria-label', diff.srLabel);
     btn.classList.add('btn', `btn--${diff.value}`);
     btn.addEventListener('click', () => onSelect(diff.value));
 
@@ -254,7 +321,12 @@ export function renderPlacementControls(
   container.innerHTML = '';
 
   const btn = document.createElement('button');
-  btn.textContent = `🔄 Rotate (${orientation === 'horizontal' ? 'H' : 'V'})`;
+  const rotateEmoji = document.createElement('span');
+  rotateEmoji.setAttribute('aria-hidden', 'true');
+  rotateEmoji.textContent = '🔄 ';
+  btn.appendChild(rotateEmoji);
+  btn.appendChild(document.createTextNode(`Rotate (${orientation === 'horizontal' ? 'H' : 'V'})`));
+  btn.setAttribute('aria-label', `Rotate ship orientation, currently ${orientation}`);
   btn.classList.add('btn', 'btn--rotate');
   btn.addEventListener('click', onRotate);
   container.appendChild(btn);
@@ -351,6 +423,9 @@ export function showResultPopup(
 
   const popup = document.createElement('div');
   popup.classList.add('result-popup');
+
+  popup.setAttribute('role', 'alert');
+  popup.setAttribute('aria-live', 'assertive');
 
   if (result === 'sunk') {
     popup.classList.add('result-popup--sunk');

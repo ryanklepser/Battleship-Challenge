@@ -19,6 +19,19 @@
   padding: 0;
 }
 
+/* Screen-reader only utility */
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
 body {
   font-family: var(--font-body);
   background: radial-gradient(ellipse at 50% 30%, #111d36 0%, var(--color-ocean) 70%);
@@ -156,6 +169,30 @@ body {
   box-shadow: inset 0 0 10px rgba(96, 165, 250, 0.4);
 }
 
+/* Distinct icons for hit / miss / ship — visible alongside color */
+.cell-icon {
+  display: none;
+}
+
+.cell-icon--hit {
+  display: inline;
+  font-weight: bold;
+  font-size: 0.9rem;
+  color: #fff;
+}
+
+.cell-icon--miss {
+  display: inline;
+  font-size: 0.85rem;
+  color: var(--color-miss);
+}
+
+.cell-icon--ship {
+  display: inline;
+  font-size: 0.6rem;
+  color: rgba(255, 255, 255, 0.5);
+}
+
 .cell--ship {
   background: var(--color-ship);
 }
@@ -167,11 +204,35 @@ body {
 .cell--hit {
   background: var(--color-hit);
   z-index: 2;
+  /* Cross-hatch pattern as a non-color hit indicator */
+  background-image:
+    repeating-linear-gradient(
+      45deg,
+      transparent,
+      transparent 3px,
+      rgba(255, 255, 255, 0.15) 3px,
+      rgba(255, 255, 255, 0.15) 4px
+    ),
+    repeating-linear-gradient(
+      -45deg,
+      transparent,
+      transparent 3px,
+      rgba(255, 255, 255, 0.15) 3px,
+      rgba(255, 255, 255, 0.15) 4px
+    );
 }
 
 .cell--miss {
   background: rgba(149, 165, 166, 0.2);
   color: var(--color-miss);
+  /* Diagonal-line pattern as a non-color miss indicator */
+  background-image: repeating-linear-gradient(
+    45deg,
+    transparent,
+    transparent 4px,
+    rgba(149, 165, 166, 0.15) 4px,
+    rgba(149, 165, 166, 0.15) 5px
+  );
 }
 
 /* Ship Shapes */
@@ -448,6 +509,22 @@ body {
 .btn:hover {
   transform: translateY(-2px);
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+}
+
+/* Focus-visible rings for buttons and cells */
+.btn:focus-visible {
+  outline: 3px solid var(--color-accent);
+  outline-offset: 2px;
+}
+
+.cell:focus-visible {
+  outline: 3px solid var(--color-accent);
+  outline-offset: -1px;
+  z-index: 5;
+}
+
+.cell--focused {
+  box-shadow: inset 0 0 0 2px var(--color-accent);
 }
 
 .btn--easy {
@@ -836,5 +913,53 @@ body {
     height: 62px;
     bottom: 8px;
     right: 10px;
+  }
+}
+
+/* Reduced-motion: disable animations for users who prefer it */
+@media (prefers-reduced-motion: reduce) {
+  .missile-arc,
+  .explosion {
+    display: none !important;
+  }
+
+  .result-popup {
+    transition: none;
+  }
+
+  .result-popup--visible {
+    transform: translate(-50%, -50%) scale(1);
+  }
+
+  .result-popup--fade {
+    transform: translate(-50%, -50%) scale(1);
+  }
+
+  .mascot--idle,
+  .mascot--watching,
+  .mascot--celebrate,
+  .mascot--disappointed,
+  .mascot--victory,
+  .mascot--defeat {
+    animation: none;
+  }
+
+  .mascot-container {
+    transition: none;
+  }
+
+  .cell {
+    transition: none;
+  }
+
+  .btn {
+    transition: none;
+  }
+
+  @keyframes explode {
+    0%, 100% {
+      opacity: 0;
+      transform: scale(0);
+    }
   }
 }
