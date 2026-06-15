@@ -575,7 +575,7 @@ export function showAttackAnimation(
 
   const trailHistory: Array<{ x: number; y: number }> = [];
 
-  const duration = 720;
+  const duration = 1080;
   const startTime = performance.now();
   const peakHeight = 120;
 
