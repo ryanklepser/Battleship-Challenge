@@ -1,4 +1,4 @@
-import type { Board, GameState, Coordinate, Ship } from '../game/types';
+import type { Board, GameState, Coordinate, Ship, Difficulty } from '../game/types';
 import { BOARD_SIZE, SHIP_DEFINITIONS } from '../game/types';
 
 const COL_LABELS = 'ABCDEFGHIJ';
@@ -257,10 +257,10 @@ export function renderStatus(state: GameState, container: HTMLElement): void {
         'Choose your target',
         'Awaiting your orders',
       ];
-      container.textContent =
-        playerPrompts[state.turnNumber % playerPrompts.length];
+      const prompt = playerPrompts[state.turnNumber % playerPrompts.length];
+      container.textContent = `Turn ${state.stats.playerShotsFired + 1} — ${prompt}`;
     } else {
-      container.textContent = 'Devin is plotting\u2026';
+      container.textContent = `Turn ${state.stats.playerShotsFired} — Devin is plotting\u2026`;
     }
   }
 }
@@ -301,9 +301,11 @@ export function renderDifficultySelector(
     { value: 'expert', label: '🔴 Expert', tooltip: 'Parity strategy — plays to win', srLabel: 'Expert difficulty', flavor: 'No mercy' },
   ];
 
+  const bests = getPersonalBests();
+
   for (const diff of difficulties) {
     const btnWrapper = document.createElement('div');
-    btnWrapper.classList.add('btn-wrapper');
+    btnWrapper.classList.add('btn-wrapper', 'difficulty-btn-wrap');
 
     const btn = document.createElement('button');
     btn.setAttribute('aria-label', diff.srLabel);
@@ -327,6 +329,15 @@ export function renderDifficultySelector(
 
     btnWrapper.appendChild(tooltip);
     btnWrapper.appendChild(btn);
+
+    const best = bests[diff.value];
+    if (best !== null) {
+      const badge = document.createElement('span');
+      badge.classList.add('best-badge');
+      badge.textContent = `Best: ${best}%`;
+      btnWrapper.appendChild(badge);
+    }
+
     wrapper.appendChild(btnWrapper);
   }
 
@@ -569,4 +580,88 @@ export function showResultPopup(
     popup.classList.add('result-popup--fade');
     setTimeout(() => popup.remove(), 400);
   }, 1000);
+}
+
+const BEST_STORAGE_KEY = 'battlefield-personal-bests';
+const GAME_URL = 'https://ryanklepser.github.io/Battleship-Challenge/';
+
+type PersonalBests = Record<Difficulty, number | null>;
+
+export function getPersonalBests(): PersonalBests {
+  try {
+    const raw = localStorage.getItem(BEST_STORAGE_KEY);
+    if (raw) {
+      const parsed = JSON.parse(raw) as Partial<Record<Difficulty, number>>;
+      return {
+        easy: parsed.easy ?? null,
+        medium: parsed.medium ?? null,
+        expert: parsed.expert ?? null,
+      };
+    }
+  } catch {
+    // ignore
+  }
+  return { easy: null, medium: null, expert: null };
+}
+
+export function savePersonalBest(difficulty: Difficulty, accuracy: number): boolean {
+  const bests = getPersonalBests();
+  const current = bests[difficulty];
+  if (current === null || accuracy > current) {
+    bests[difficulty] = accuracy;
+    localStorage.setItem(BEST_STORAGE_KEY, JSON.stringify(bests));
+    return true;
+  }
+  return false;
+}
+
+export function computeAccuracy(turnCount: number): number {
+  const totalShipCells = SHIP_DEFINITIONS.reduce((sum, s) => sum + s.size, 0);
+  return Math.round((totalShipCells / turnCount) * 100);
+}
+
+function buildShareText(turnCount: number, difficulty: Difficulty): string {
+  const label = difficulty.charAt(0).toUpperCase() + difficulty.slice(1);
+  return `I sank Devin's fleet in ${turnCount} shots on ${label}! ${GAME_URL}`;
+}
+
+export function renderShareButton(
+  container: HTMLElement,
+  turnCount: number,
+  difficulty: Difficulty,
+): void {
+  const shareWrap = document.createElement('div');
+  shareWrap.classList.add('share-wrap');
+
+  const copyBtn = document.createElement('button');
+  copyBtn.classList.add('btn', 'btn--share');
+  copyBtn.textContent = 'Copy Result';
+  copyBtn.addEventListener('click', () => {
+    const text = buildShareText(turnCount, difficulty);
+    navigator.clipboard.writeText(text).then(() => {
+      copyBtn.textContent = 'Copied!';
+      setTimeout(() => { copyBtn.textContent = 'Copy Result'; }, 2000);
+    }).catch(() => {
+      copyBtn.textContent = 'Copy failed';
+    });
+  });
+  shareWrap.appendChild(copyBtn);
+
+  const tweetBtn = document.createElement('a');
+  tweetBtn.classList.add('btn', 'btn--share', 'btn--tweet');
+  tweetBtn.textContent = 'Share on X';
+  tweetBtn.target = '_blank';
+  tweetBtn.rel = 'noopener noreferrer';
+  tweetBtn.href =
+    `https://twitter.com/intent/tweet?text=${encodeURIComponent(buildShareText(turnCount, difficulty))}`;
+  shareWrap.appendChild(tweetBtn);
+
+  container.appendChild(shareWrap);
+}
+
+export function renderNewBestBanner(container: HTMLElement, accuracy: number): void {
+  const banner = document.createElement('div');
+  banner.classList.add('new-best-banner');
+  banner.textContent = `New Personal Best: ${accuracy}% accuracy!`;
+  container.appendChild(banner);
 }
