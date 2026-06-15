@@ -74,6 +74,12 @@ function cellStateLabel(state: string, shipName: string | null, hideShips: boole
     default: return 'empty';
   }
 }
+
+function getCellSize(): number {
+  if (window.innerWidth <= 768) return 32;
+  return 36;
+}
+
 export function renderBoard(
   board: Board,
   container: HTMLElement,
@@ -84,6 +90,7 @@ export function renderBoard(
 ): void {
   container.innerHTML = '';
 
+  const cellSize = getCellSize();
   const table = document.createElement('table');
   table.classList.add('board');
   table.setAttribute('role', 'grid');
@@ -180,8 +187,8 @@ export function renderBoard(
                 wrapper.classList.add(
                   info.orientation === 'vertical' ? 'ship-shape--vertical' : 'ship-shape--horizontal',
                 );
-                wrapper.style.width = `${info.total * 36}px`;
-                wrapper.style.height = '36px';
+                wrapper.style.width = `${info.total * cellSize}px`;
+                wrapper.style.height = `${cellSize}px`;
                 wrapper.innerHTML = SHIP_SVGS[cell.shipName];
                 td.appendChild(wrapper);
                 td.classList.add('cell--ship-origin');
@@ -742,6 +749,79 @@ export function renderMuteButton(
   ambientBtn.textContent = ambientOn ? '🌊' : '🔕';
   ambientBtn.addEventListener('click', onToggleAmbient);
   container.appendChild(ambientBtn);
+}
+
+export function isMobileView(): boolean {
+  return window.innerWidth <= 768;
+}
+
+export function renderBoardTabs(
+  container: HTMLElement,
+  activeTab: 'player' | 'ai',
+  onSwitch: (tab: 'player' | 'ai') => void,
+): void {
+  container.innerHTML = '';
+
+  const tabBar = document.createElement('div');
+  tabBar.classList.add('board-tabs');
+
+  const playerBtn = document.createElement('button');
+  playerBtn.textContent = 'Your Fleet';
+  playerBtn.classList.add('board-tabs__btn');
+  if (activeTab === 'player') playerBtn.classList.add('board-tabs__btn--active');
+  playerBtn.addEventListener('click', () => onSwitch('player'));
+
+  const aiBtn = document.createElement('button');
+  aiBtn.textContent = "Devin's Waters";
+  aiBtn.classList.add('board-tabs__btn');
+  if (activeTab === 'ai') aiBtn.classList.add('board-tabs__btn--active');
+  aiBtn.addEventListener('click', () => onSwitch('ai'));
+
+  tabBar.appendChild(playerBtn);
+  tabBar.appendChild(aiBtn);
+  container.appendChild(tabBar);
+}
+
+export function renderFireButton(
+  container: HTMLElement,
+  enabled: boolean,
+  onFire: () => void,
+): void {
+  container.innerHTML = '';
+
+  const wrapper = document.createElement('div');
+  wrapper.classList.add('fire-btn-container');
+
+  const btn = document.createElement('button');
+  btn.textContent = '\ud83c\udfaf FIRE';
+  btn.classList.add('btn', 'btn--fire');
+  btn.disabled = !enabled;
+  btn.addEventListener('click', onFire);
+
+  wrapper.appendChild(btn);
+  container.appendChild(wrapper);
+}
+
+export function renderPlaceConfirmButton(
+  container: HTMLElement,
+  enabled: boolean,
+  onConfirm: () => void,
+): void {
+  const existing = container.querySelector('.btn--confirm-place');
+  if (existing) existing.remove();
+
+  const btn = document.createElement('button');
+  btn.textContent = '\u2705 Confirm Placement';
+  btn.classList.add('btn', 'btn--confirm-place');
+  btn.disabled = !enabled;
+  btn.addEventListener('click', onConfirm);
+  container.appendChild(btn);
+}
+
+export function triggerHapticFeedback(): void {
+  if (navigator.vibrate) {
+    navigator.vibrate(50);
+  }
 }
 
 export function showResultPopup(

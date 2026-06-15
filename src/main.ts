@@ -19,6 +19,11 @@ import {
   clearCrosshair,
   flashCrosshair,
   triggerLockInAnimation,
+  isMobileView,
+  renderBoardTabs,
+  renderFireButton,
+  renderPlaceConfirmButton,
+  triggerHapticFeedback,
 } from './ui/renderer';
 import {
   createGameState,
@@ -200,19 +205,21 @@ function renderGame(state: GameState): void {
       </header>
       <main role="main">
         <div id="status" class="status" role="status" aria-live="polite"></div>
+        <div id="board-tabs-container"></div>
         <div class="game-layout">
           <div id="fleet-roster" class="fleet-roster" role="complementary" aria-label="Fleet roster"></div>
           <div class="boards">
-            <section class="board-wrapper" aria-label="Your Fleet">
+            <section class="board-wrapper" id="player-board-wrapper" aria-label="Your Fleet">
               <h2 class="board-title">Your Fleet</h2>
               <div id="player-board"></div>
             </section>
-            <section class="board-wrapper" aria-label="Devin's Waters">
+            <section class="board-wrapper" id="ai-board-wrapper" aria-label="Devin's Waters">
               <h2 class="board-title board-title--delay">Devin's Waters</h2>
               <div id="ai-board"></div>
             </section>
           </div>
         </div>
+        <div id="fire-btn-container"></div>
         <div id="game-actions" class="game-actions" role="toolbar" aria-label="Game actions"></div>
       </main>
     </div>
@@ -233,12 +240,69 @@ function renderGame(state: GameState): void {
   const aiBoardEl = document.querySelector<HTMLDivElement>('#ai-board')!;
   const actionsEl = document.querySelector<HTMLDivElement>('#game-actions')!;
   const rosterEl = document.querySelector<HTMLDivElement>('#fleet-roster')!;
+  const tabsContainer = document.querySelector<HTMLDivElement>('#board-tabs-container')!;
+  const fireBtnContainer = document.querySelector<HTMLDivElement>('#fire-btn-container')!;
+  const playerWrapper = document.querySelector<HTMLElement>('#player-board-wrapper')!;
+  const aiWrapper = document.querySelector<HTMLElement>('#ai-board-wrapper')!;
 
   mountMascot(document.body);
   updateMascotForPhase(state.phase, state.winner);
 
   let animating = false;
   let battleJustStarted = false;
+  let activeTab: 'player' | 'ai' = state.phase === 'placement' ? 'player' : 'ai';
+  let selectedTarget: { row: number; col: number } | null = null;
+  let selectedPlacementCell: { row: number; col: number } | null = null;
+
+  function updateTabVisibility(): void {
+    if (!isMobileView()) {
+      playerWrapper.classList.remove('board-wrapper--hidden');
+      aiWrapper.classList.remove('board-wrapper--hidden');
+      tabsContainer.innerHTML = '';
+      return;
+    }
+
+    renderBoardTabs(tabsContainer, activeTab, (tab) => {
+      activeTab = tab;
+      updateTabVisibility();
+      update();
+    });
+
+    if (activeTab === 'player') {
+      playerWrapper.classList.remove('board-wrapper--hidden');
+      aiWrapper.classList.add('board-wrapper--hidden');
+    } else {
+      playerWrapper.classList.add('board-wrapper--hidden');
+      aiWrapper.classList.remove('board-wrapper--hidden');
+    }
+  }
+
+  function clearSelectedTarget(): void {
+    selectedTarget = null;
+    aiBoardEl.querySelectorAll('.cell--selected').forEach((el) => {
+      el.classList.remove('cell--selected');
+    });
+  }
+
+  function highlightSelectedTarget(): void {
+    aiBoardEl.querySelectorAll('.cell--selected').forEach((el) => {
+      el.classList.remove('cell--selected');
+    });
+    if (selectedTarget) {
+      const cell = aiBoardEl.querySelector(
+        `[data-row="${selectedTarget.row}"][data-col="${selectedTarget.col}"]`,
+      );
+      if (cell) cell.classList.add('cell--selected');
+    }
+  }
+
+  function clearSelectedPlacement(): void {
+    selectedPlacementCell = null;
+    playerBoardEl.querySelectorAll('.cell--selected').forEach((el) => {
+      el.classList.remove('cell--selected');
+    });
+    updatePreview(playerBoardEl, [], false);
+  }
 
   function update(): void {
     renderStatus(state, statusEl);
@@ -246,6 +310,9 @@ function renderGame(state: GameState): void {
     updateMascotForPhase(state.phase, state.winner);
 
     if (state.phase === 'placement') {
+      if (isMobileView()) activeTab = 'player';
+      updateTabVisibility();
+
       renderBoard(state.playerBoard, playerBoardEl, false, handlePlacementClick, state.playerShips);
       renderBoard(state.aiBoard, aiBoardEl, true);
 
@@ -259,9 +326,38 @@ function renderGame(state: GameState): void {
           onUndo: handleUndo,
         },
       );
+
+      if (isMobileView()) {
+        const preview = selectedPlacementCell
+          ? getPlacementPreview(state, selectedPlacementCell)
+          : null;
+        const isValid = preview?.valid ?? false;
+
+        renderPlaceConfirmButton(actionsEl, isValid, handleConfirmPlacement);
+
+        if (selectedPlacementCell && preview) {
+          updatePreview(playerBoardEl, preview.cells, preview.valid);
+          const cell = playerBoardEl.querySelector(
+            `[data-row="${selectedPlacementCell.row}"][data-col="${selectedPlacementCell.col}"]`,
+          );
+          if (cell) cell.classList.add('cell--selected');
+        }
+
+        const hint = actionsEl.querySelector('.placement-hint');
+        if (hint) {
+          hint.textContent = 'Tap a cell to preview · Tap Confirm to place · Press R to rotate';
+        }
+      }
+
+      fireBtnContainer.innerHTML = '';
     } else if (state.phase === 'battle') {
       const reveal = battleJustStarted;
       battleJustStarted = false;
+
+      if (isMobileView() && activeTab === 'player') {
+        activeTab = 'ai';
+      }
+      updateTabVisibility();
 
       renderBoard(state.playerBoard, playerBoardEl, false, undefined, state.playerShips, reveal);
 
@@ -272,11 +368,20 @@ function renderGame(state: GameState): void {
       }
 
       actionsEl.innerHTML = '';
+
+      if (isMobileView() && !animating && state.isPlayerTurn) {
+        renderFireButton(fireBtnContainer, selectedTarget !== null, handleFireConfirm);
+        highlightSelectedTarget();
+      } else {
+        fireBtnContainer.innerHTML = '';
+      }
     } else {
+      updateTabVisibility();
       renderBoard(state.playerBoard, playerBoardEl, false, undefined, state.playerShips);
       renderBoard(state.aiBoard, aiBoardEl, false, undefined, state.aiShips);
 
       renderGameOver(actionsEl);
+      fireBtnContainer.innerHTML = '';
     }
   }
 
@@ -291,6 +396,7 @@ function renderGame(state: GameState): void {
   }
 
   playerBoardEl.addEventListener('mouseover', (e) => {
+    if (isMobileView()) return;
     const cell = (e.target as HTMLElement).closest('.cell') as HTMLElement | null;
     if (cell) {
       const row = parseInt(cell.dataset.row ?? '0');
@@ -300,6 +406,7 @@ function renderGame(state: GameState): void {
   }, { signal });
 
   playerBoardEl.addEventListener('mouseout', (e) => {
+    if (isMobileView()) return;
     const related = (e as MouseEvent).relatedTarget as HTMLElement | null;
     if (!related || !playerBoardEl.contains(related)) {
       clearPreview();
@@ -325,6 +432,12 @@ function renderGame(state: GameState): void {
 
   function handlePlacementClick(row: number, col: number): void {
     handleFirstInteraction();
+    if (isMobileView()) {
+      selectedPlacementCell = { row, col };
+      update();
+      return;
+    }
+
     const preview = getPlacementPreview(state, { row, col });
     const wasPlacement = state.phase === 'placement';
     const placed = placeCurrentShip(state, { row, col });
@@ -341,10 +454,33 @@ function renderGame(state: GameState): void {
     }
   }
 
+  function handleConfirmPlacement(): void {
+    if (!selectedPlacementCell) return;
+    const preview = getPlacementPreview(state, selectedPlacementCell);
+    const wasPlacement = state.phase === 'placement';
+    const placed = placeCurrentShip(state, selectedPlacementCell);
+    if (placed) {
+      clearSelectedPlacement();
+      if (wasPlacement && state.phase === 'battle') {
+        battleJustStarted = true;
+        showInterstitial().then(() => {
+          update();
+        });
+      } else {
+        update();
+        triggerLockInAnimation(playerBoardEl, preview.cells);
+      }
+    }
+  }
+
   function handleRotate(): void {
     rotateCurrentShip(state);
-    clearPreview();
-    update();
+    if (isMobileView() && selectedPlacementCell) {
+      update();
+    } else {
+      clearPreview();
+      update();
+    }
   }
 
   function handleRandomize(): void {
@@ -367,6 +503,27 @@ function renderGame(state: GameState): void {
     if (animating) return;
     handleFirstInteraction();
 
+    if (isMobileView()) {
+      const cell = state.aiBoard[row][col];
+      if (cell.state === 'hit' || cell.state === 'miss') return;
+
+      selectedTarget = { row, col };
+      highlightSelectedTarget();
+      renderFireButton(fireBtnContainer, true, handleFireConfirm);
+      return;
+    }
+
+    executeAttack(row, col);
+  }
+
+  function handleFireConfirm(): void {
+    if (!selectedTarget) return;
+    const { row, col } = selectedTarget;
+    selectedTarget = null;
+    executeAttack(row, col);
+  }
+
+  function executeAttack(row: number, col: number): void {
     const result = playerAttack(state, { row, col });
     if (!result) return;
 
@@ -400,6 +557,7 @@ function renderGame(state: GameState): void {
           mascotReactToMiss(true);
         } else {
           mascotReactToHit(true);
+          triggerHapticFeedback();
         }
 
         if (result.gameOver && state.winner === 'player') {
@@ -407,9 +565,14 @@ function renderGame(state: GameState): void {
         }
 
         animating = false;
+        clearSelectedTarget();
         update();
 
         if (!result.gameOver) {
+          if (isMobileView()) {
+            activeTab = 'player';
+            updateTabVisibility();
+          }
           runAITurn();
         }
 
@@ -448,9 +611,16 @@ function renderGame(state: GameState): void {
           } else {
             mascotReactToHit(false);
             shakeBoard(playerBoardEl);
+            triggerHapticFeedback();
           }
 
           animating = false;
+
+          if (isMobileView() && state.phase === 'battle') {
+            activeTab = 'ai';
+            updateTabVisibility();
+          }
+
           update();
 
           void coord;
