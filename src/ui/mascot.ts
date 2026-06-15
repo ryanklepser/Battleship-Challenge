@@ -50,114 +50,59 @@ const MASCOT_SVG = `<svg viewBox="0 0 16 20" class="mascot-svg" xmlns="http://ww
   <rect x="14" y="10" width="1" height="1" fill="#6b4e0e"/>
 </svg>`;
 
-let mascotEl: HTMLElement | null = null;
+let leftMascot: HTMLElement | null = null;
+let rightMascot: HTMLElement | null = null;
 let currentMood: MascotMood = 'idle';
-let roamInterval: ReturnType<typeof setInterval> | null = null;
-let facingLeft = false;
 
-function getExclusionRects(): DOMRect[] {
-  const selectors = [
-    '.boards',
-    '.board-wrapper',
-    '#fleet-roster',
-    '.header',
-    '#status',
-    '.game-actions',
-    '#fire-btn-container',
-    '.difficulty-selector',
-  ];
-  const rects: DOMRect[] = [];
-  for (const sel of selectors) {
-    const el = document.querySelector(sel);
-    if (el) rects.push(el.getBoundingClientRect());
-  }
-  return rects;
-}
-
-function rectsOverlap(
-  x: number, y: number, w: number, h: number, rect: DOMRect,
-): boolean {
-  return x < rect.right && x + w > rect.left && y < rect.bottom && y + h > rect.top;
-}
-
-function getRandomPosition(): { x: number; y: number } {
-  const mascotW = 64;
-  const mascotH = 80;
-  const margin = 20;
-  const exclusions = getExclusionRects();
-
-  for (let attempt = 0; attempt < 30; attempt++) {
-    const x = margin + Math.random() * (window.innerWidth - mascotW - margin * 2);
-    const y = margin + Math.random() * (window.innerHeight - mascotH - margin * 2);
-    const overlaps = exclusions.some(rect => rectsOverlap(x, y, mascotW, mascotH, rect));
-    if (!overlaps) return { x, y };
-  }
-
-  // Fallback: bottom-right corner
-  return { x: window.innerWidth - mascotW - margin, y: window.innerHeight - mascotH - margin };
-}
-
-function moveToRandomPosition(): void {
-  if (!mascotEl) return;
-  const { x, y } = getRandomPosition();
-  const currentLeft = mascotEl.getBoundingClientRect().left;
-  facingLeft = x < currentLeft;
-  mascotEl.style.left = `${x}px`;
-  mascotEl.style.top = `${y}px`;
-  mascotEl.style.transform = facingLeft ? 'scaleX(-1)' : 'scaleX(1)';
-}
-
-function startRoaming(): void {
-  stopRoaming();
-  moveToRandomPosition();
-  roamInterval = setInterval(() => {
-    moveToRandomPosition();
-  }, 2500 + Math.random() * 2000);
-}
-
-function stopRoaming(): void {
-  if (roamInterval !== null) {
-    clearInterval(roamInterval);
-    roamInterval = null;
-  }
-}
-
-export function createMascot(): HTMLElement {
-  if (mascotEl) return mascotEl;
-
+function createMascotElement(side: 'left' | 'right'): HTMLElement {
   const container = document.createElement('div');
-  container.classList.add('mascot-container');
+  container.classList.add('mascot-container', `mascot-container--${side}`);
   container.innerHTML = MASCOT_SVG;
 
   const speechBubble = document.createElement('div');
   speechBubble.classList.add('mascot-speech');
   container.appendChild(speechBubble);
 
-  mascotEl = container;
   return container;
 }
 
-export function mountMascot(parent: HTMLElement): void {
-  const el = createMascot();
-  if (!el.parentElement) {
-    parent.appendChild(el);
+export function createMascot(): HTMLElement {
+  // For backward compatibility, return the left mascot
+  if (!leftMascot) {
+    leftMascot = createMascotElement('left');
   }
-  startRoaming();
+  return leftMascot;
+}
+
+export function mountMascot(parent: HTMLElement): void {
+  if (!leftMascot) {
+    leftMascot = createMascotElement('left');
+  }
+  if (!rightMascot) {
+    rightMascot = createMascotElement('right');
+  }
+
+  if (!leftMascot.parentElement) {
+    parent.appendChild(leftMascot);
+  }
+  if (!rightMascot.parentElement) {
+    parent.appendChild(rightMascot);
+  }
 }
 
 export function removeMascot(): void {
-  stopRoaming();
-  if (mascotEl && mascotEl.parentElement) {
-    mascotEl.parentElement.removeChild(mascotEl);
+  if (leftMascot && leftMascot.parentElement) {
+    leftMascot.parentElement.removeChild(leftMascot);
   }
-  mascotEl = null;
+  if (rightMascot && rightMascot.parentElement) {
+    rightMascot.parentElement.removeChild(rightMascot);
+  }
+  leftMascot = null;
+  rightMascot = null;
 }
 
-export function setMascotMood(mood: MascotMood, message?: string): void {
-  if (!mascotEl) return;
-  currentMood = mood;
-
-  mascotEl.classList.remove(
+function setMoodOnElement(el: HTMLElement, mood: MascotMood, message?: string): void {
+  el.classList.remove(
     'mascot--idle',
     'mascot--watching',
     'mascot--celebrate',
@@ -165,9 +110,9 @@ export function setMascotMood(mood: MascotMood, message?: string): void {
     'mascot--victory',
     'mascot--defeat',
   );
-  mascotEl.classList.add(`mascot--${mood}`);
+  el.classList.add(`mascot--${mood}`);
 
-  const speech = mascotEl.querySelector('.mascot-speech') as HTMLElement | null;
+  const speech = el.querySelector('.mascot-speech') as HTMLElement | null;
   if (speech) {
     if (message) {
       speech.textContent = message;
@@ -181,12 +126,27 @@ export function setMascotMood(mood: MascotMood, message?: string): void {
   }
 }
 
+export function setMascotMood(mood: MascotMood, message?: string): void {
+  currentMood = mood;
+  if (leftMascot) setMoodOnElement(leftMascot, mood, message);
+  if (rightMascot) setMoodOnElement(rightMascot, mood, message);
+}
+
+export function mascotShoutFire(): void {
+  if (leftMascot) setMoodOnElement(leftMascot, 'celebrate', 'Fire!');
+  if (rightMascot) setMoodOnElement(rightMascot, 'celebrate', 'Fire!');
+  setTimeout(() => {
+    if (currentMood === 'watching' || currentMood === 'celebrate') {
+      if (leftMascot) setMoodOnElement(leftMascot, 'watching');
+      if (rightMascot) setMoodOnElement(rightMascot, 'watching');
+    }
+  }, 1500);
+}
+
 export function updateMascotForPhase(phase: GamePhase, winner: 'player' | 'ai' | null): void {
   if (phase === 'battle') {
     setMascotMood('watching', 'Engage!');
-    startRoaming();
   } else if (phase === 'gameover') {
-    stopRoaming();
     if (winner === 'player') {
       setMascotMood('defeat', 'You got me...');
     } else {
