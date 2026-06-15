@@ -112,6 +112,10 @@ body {
   border: 1px solid rgba(255, 255, 255, 0.08);
 }
 
+.status--hidden {
+  display: none;
+}
+
 .status--gameover {
   font-family: var(--font-display);
   font-size: 1.8rem;

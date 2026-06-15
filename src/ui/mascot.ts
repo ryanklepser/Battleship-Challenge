@@ -55,14 +55,46 @@ let currentMood: MascotMood = 'idle';
 let roamInterval: ReturnType<typeof setInterval> | null = null;
 let facingLeft = false;
 
+function getExclusionRects(): DOMRect[] {
+  const selectors = [
+    '.boards',
+    '.board-wrapper',
+    '#fleet-roster',
+    '.header',
+    '#status',
+    '.game-actions',
+    '#fire-btn-container',
+    '.difficulty-selector',
+  ];
+  const rects: DOMRect[] = [];
+  for (const sel of selectors) {
+    const el = document.querySelector(sel);
+    if (el) rects.push(el.getBoundingClientRect());
+  }
+  return rects;
+}
+
+function rectsOverlap(
+  x: number, y: number, w: number, h: number, rect: DOMRect,
+): boolean {
+  return x < rect.right && x + w > rect.left && y < rect.bottom && y + h > rect.top;
+}
+
 function getRandomPosition(): { x: number; y: number } {
-  const margin = 100;
-  const maxX = window.innerWidth - margin;
-  const maxY = window.innerHeight - margin;
-  return {
-    x: margin + Math.random() * (maxX - margin),
-    y: margin + Math.random() * (maxY - margin),
-  };
+  const mascotW = 64;
+  const mascotH = 80;
+  const margin = 20;
+  const exclusions = getExclusionRects();
+
+  for (let attempt = 0; attempt < 30; attempt++) {
+    const x = margin + Math.random() * (window.innerWidth - mascotW - margin * 2);
+    const y = margin + Math.random() * (window.innerHeight - mascotH - margin * 2);
+    const overlaps = exclusions.some(rect => rectsOverlap(x, y, mascotW, mascotH, rect));
+    if (!overlaps) return { x, y };
+  }
+
+  // Fallback: bottom-right corner
+  return { x: window.innerWidth - mascotW - margin, y: window.innerHeight - mascotH - margin };
 }
 
 function moveToRandomPosition(): void {

@@ -319,7 +319,7 @@ export function updatePreview(
 }
 
 export function renderStatus(state: GameState, container: HTMLElement): void {
-  container.classList.remove('status--gameover');
+  container.classList.remove('status--gameover', 'status--hidden');
   container.setAttribute('role', 'status');
   container.setAttribute('aria-live', 'polite');
 
@@ -339,6 +339,7 @@ export function renderStatus(state: GameState, container: HTMLElement): void {
     }
   } else {
     container.textContent = '';
+    container.classList.add('status--hidden');
   }
 }
 
