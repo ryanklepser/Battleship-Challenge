@@ -850,7 +850,12 @@ export function showResultPopup(
     popup.textContent = 'MISS!';
   }
 
-  document.body.appendChild(popup);
+  const statusEl = document.querySelector('#status');
+  if (statusEl && statusEl.parentElement) {
+    statusEl.parentElement.insertBefore(popup, statusEl);
+  } else {
+    document.body.appendChild(popup);
+  }
 
   requestAnimationFrame(() => {
     popup.classList.add('result-popup--visible');
