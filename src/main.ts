@@ -39,6 +39,57 @@ function removeLandingBg(): void {
   document.querySelector('.landing-bg')?.remove();
 }
 
+function transitionPhase(renderFn: () => void): void {
+  const content = app.querySelector('.phase-content') as HTMLElement | null;
+  if (!content) {
+    renderFn();
+    const fresh = app.querySelector('.phase-content') as HTMLElement | null;
+    if (fresh) {
+      fresh.classList.add('phase-content--enter');
+      requestAnimationFrame(() => {
+        fresh.classList.remove('phase-content--enter');
+      });
+    }
+    return;
+  }
+
+  content.classList.add('phase-content--exit');
+  content.addEventListener('transitionend', () => {
+    renderFn();
+    const newContent = app.querySelector('.phase-content') as HTMLElement | null;
+    if (newContent) {
+      newContent.classList.add('phase-content--enter');
+      requestAnimationFrame(() => {
+        newContent.classList.remove('phase-content--enter');
+      });
+    }
+  }, { once: true });
+}
+
+function showInterstitial(): Promise<void> {
+  return new Promise((resolve) => {
+    const overlay = document.createElement('div');
+    overlay.classList.add('interstitial');
+    overlay.innerHTML = `
+      <div class="interstitial__text">Deploying fleet...</div>
+      <div class="radar-sweep"></div>
+    `;
+    document.body.appendChild(overlay);
+
+    requestAnimationFrame(() => {
+      overlay.classList.add('interstitial--visible');
+    });
+
+    setTimeout(() => {
+      overlay.classList.remove('interstitial--visible');
+      overlay.addEventListener('transitionend', () => {
+        overlay.remove();
+        resolve();
+      }, { once: true });
+    }, 500);
+  });
+}
+
 function showMenu(): void {
   removeMascot();
   removeLandingBg();
@@ -52,22 +103,28 @@ function showMenu(): void {
   `;
   document.body.appendChild(bg);
 
-  app.innerHTML = `
-    <header class="header" role="banner">
-      <h1>⚓ Battlefield</h1>
-      <p>Sink Devin's fleet before Devin sinks yours!</p>
-    </header>
-    <main id="game-root" role="main"></main>
-  `;
+  transitionPhase(() => {
+    app.innerHTML = `
+      <div class="phase-content">
+        <header class="header" role="banner">
+          <h1>⚓ Battlefield</h1>
+          <p>Sink Devin's fleet before Devin sinks yours!</p>
+        </header>
+        <main id="game-root" role="main"></main>
+      </div>
+    `;
 
-  const gameRoot = document.querySelector<HTMLDivElement>('#game-root')!;
-  renderDifficultySelector(gameRoot, startGame);
+    const gameRoot = document.querySelector<HTMLDivElement>('#game-root')!;
+    renderDifficultySelector(gameRoot, startGame);
+  });
 }
 
 function startGame(difficulty: Difficulty): void {
   removeLandingBg();
   const state = createGameState(difficulty);
-  renderGame(state);
+  transitionPhase(() => {
+    renderGame(state);
+  });
 }
 
 function renderGame(state: GameState): void {
@@ -76,26 +133,28 @@ function renderGame(state: GameState): void {
   const { signal } = gameAbort;
 
   app.innerHTML = `
-    <header class="header" role="banner">
-      <h1>⚓ Battlefield</h1>
-    </header>
-    <main role="main">
-      <div id="status" class="status" role="status" aria-live="polite"></div>
-      <div class="game-layout">
-        <div id="fleet-roster" class="fleet-roster" role="complementary" aria-label="Fleet roster"></div>
-        <div class="boards">
-          <section class="board-wrapper" aria-label="Your Fleet">
-            <h2 class="board-title">Your Fleet</h2>
-            <div id="player-board"></div>
-          </section>
-          <section class="board-wrapper" aria-label="Devin's Waters">
-            <h2 class="board-title">Devin's Waters</h2>
-            <div id="ai-board"></div>
-          </section>
+    <div class="phase-content">
+      <header class="header" role="banner">
+        <h1>⚓ Battlefield</h1>
+      </header>
+      <main role="main">
+        <div id="status" class="status" role="status" aria-live="polite"></div>
+        <div class="game-layout">
+          <div id="fleet-roster" class="fleet-roster" role="complementary" aria-label="Fleet roster"></div>
+          <div class="boards">
+            <section class="board-wrapper" aria-label="Your Fleet">
+              <h2 class="board-title">Your Fleet</h2>
+              <div id="player-board"></div>
+            </section>
+            <section class="board-wrapper" aria-label="Devin's Waters">
+              <h2 class="board-title board-title--delay">Devin's Waters</h2>
+              <div id="ai-board"></div>
+            </section>
+          </div>
         </div>
-      </div>
-      <div id="game-actions" class="game-actions" role="toolbar" aria-label="Game actions"></div>
-    </main>
+        <div id="game-actions" class="game-actions" role="toolbar" aria-label="Game actions"></div>
+      </main>
+    </div>
   `;
 
   const statusEl = document.querySelector<HTMLDivElement>('#status')!;
@@ -172,12 +231,17 @@ function renderGame(state: GameState): void {
   }, { signal });
 
   function handlePlacementClick(row: number, col: number): void {
+    const wasPlacement = state.phase === 'placement';
     const placed = placeCurrentShip(state, { row, col });
     if (placed) {
-      if (state.phase === 'battle') {
+      if (wasPlacement && state.phase === 'battle') {
         battleJustStarted = true;
+        showInterstitial().then(() => {
+          update();
+        });
+      } else {
+        update();
       }
-      update();
     }
   }
 
