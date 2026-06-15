@@ -251,9 +251,17 @@ export function renderStatus(state: GameState, container: HTMLElement): void {
       container.textContent = `Place your ${ship.name} (${ship.size} cells) — ${state.placement.orientation}`;
     }
   } else {
-    container.textContent = state.isPlayerTurn
-      ? "Your turn — click a cell on Devin's board"
-      : '\u00A0';
+    if (state.isPlayerTurn) {
+      const playerPrompts = [
+        'Fire at will, Captain',
+        'Choose your target',
+        'Awaiting your orders',
+      ];
+      container.textContent =
+        playerPrompts[state.turnNumber % playerPrompts.length];
+    } else {
+      container.textContent = 'Devin is plotting\u2026';
+    }
   }
 }
 
@@ -286,10 +294,11 @@ export function renderDifficultySelector(
     label: string;
     tooltip: string;
     srLabel: string;
+    flavor: string;
   }> = [
-    { value: 'easy', label: '🟢 Easy', tooltip: 'Random shots — good for learning', srLabel: 'Easy difficulty' },
-    { value: 'medium', label: '🟡 Medium', tooltip: 'Hunts adjacent cells — a real fight', srLabel: 'Medium difficulty' },
-    { value: 'expert', label: '🔴 Expert', tooltip: 'Parity strategy — plays to win', srLabel: 'Expert difficulty' },
+    { value: 'easy', label: '🟢 Easy', tooltip: 'Random shots — good for learning', srLabel: 'Easy difficulty', flavor: 'Smooth sailing' },
+    { value: 'medium', label: '🟡 Medium', tooltip: 'Hunts adjacent cells — a real fight', srLabel: 'Medium difficulty', flavor: 'Worthy opponent' },
+    { value: 'expert', label: '🔴 Expert', tooltip: 'Parity strategy — plays to win', srLabel: 'Expert difficulty', flavor: 'No mercy' },
   ];
 
   for (const diff of difficulties) {
@@ -297,13 +306,19 @@ export function renderDifficultySelector(
     btnWrapper.classList.add('btn-wrapper');
 
     const btn = document.createElement('button');
-    const emoji = document.createElement('span');
-    emoji.setAttribute('aria-hidden', 'true');
-    emoji.textContent = diff.label.slice(0, 2) + ' ';
-    btn.appendChild(emoji);
-    btn.appendChild(document.createTextNode(diff.label.slice(3)));
     btn.setAttribute('aria-label', diff.srLabel);
     btn.classList.add('btn', `btn--${diff.value}`);
+
+    const labelSpan = document.createElement('span');
+    labelSpan.classList.add('btn__label');
+    labelSpan.textContent = diff.label;
+    btn.appendChild(labelSpan);
+
+    const flavorSpan = document.createElement('span');
+    flavorSpan.classList.add('btn__flavor');
+    flavorSpan.textContent = diff.flavor;
+    btn.appendChild(flavorSpan);
+
     btn.addEventListener('click', () => onSelect(diff.value));
 
     const tooltip = document.createElement('span');
@@ -521,6 +536,7 @@ export function shakeBoard(boardEl: HTMLElement): void {
 export function showResultPopup(
   result: 'hit' | 'miss' | 'sunk',
   shipName?: string,
+  owner?: 'player' | 'ai',
 ): void {
   const existing = document.querySelector('.result-popup');
   if (existing) existing.remove();
@@ -533,7 +549,8 @@ export function showResultPopup(
 
   if (result === 'sunk') {
     popup.classList.add('result-popup--sunk');
-    popup.textContent = `${shipName} SUNK!`;
+    const ownerLabel = owner === 'ai' ? "Devin's" : 'Your';
+    popup.textContent = `${ownerLabel} ${shipName} has been eliminated!`;
   } else if (result === 'hit') {
     popup.classList.add('result-popup--hit');
     popup.textContent = 'HIT!';
