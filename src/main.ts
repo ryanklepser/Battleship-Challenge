@@ -17,6 +17,7 @@ import {
   applyCrosshair,
   clearCrosshair,
   flashCrosshair,
+  triggerLockInAnimation,
 } from './ui/renderer';
 import {
   createGameState,
@@ -25,6 +26,8 @@ import {
   rotateCurrentShip,
   placeCurrentShip,
   getPlacementPreview,
+  undoLastPlacement,
+  randomizePlayerFleet,
 } from './game/engine';
 import { formatCoordinate } from './utils/helpers';
 import {
@@ -185,6 +188,11 @@ function renderGame(state: GameState): void {
         actionsEl,
         state.placement?.orientation ?? 'horizontal',
         handleRotate,
+        {
+          currentShipIndex: state.placement?.currentShipIndex ?? 0,
+          onRandomize: handleRandomize,
+          onUndo: handleUndo,
+        },
       );
     } else if (state.phase === 'battle') {
       const reveal = battleJustStarted;
@@ -251,6 +259,7 @@ function renderGame(state: GameState): void {
   }, { signal });
 
   function handlePlacementClick(row: number, col: number): void {
+    const preview = getPlacementPreview(state, { row, col });
     const wasPlacement = state.phase === 'placement';
     const placed = placeCurrentShip(state, { row, col });
     if (placed) {
@@ -261,6 +270,7 @@ function renderGame(state: GameState): void {
         });
       } else {
         update();
+        triggerLockInAnimation(playerBoardEl, preview.cells);
       }
     }
   }
@@ -269,6 +279,22 @@ function renderGame(state: GameState): void {
     rotateCurrentShip(state);
     clearPreview();
     update();
+  }
+
+  function handleRandomize(): void {
+    randomizePlayerFleet(state);
+    battleJustStarted = true;
+    showInterstitial().then(() => {
+      update();
+    });
+  }
+
+  function handleUndo(): void {
+    const undone = undoLastPlacement(state);
+    if (undone) {
+      clearPreview();
+      update();
+    }
   }
 
   function handlePlayerClick(row: number, col: number): void {

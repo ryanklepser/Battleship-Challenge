@@ -424,28 +424,118 @@ export function renderDifficultySelector(
   container.appendChild(wrapper);
 }
 
+const MINI_SHIP_SVGS: Record<string, string> = {
+  Carrier: `<svg viewBox="0 0 5 1"><rect x="0.1" y="0.15" width="4.8" height="0.7" rx="0.25" fill="currentColor"/></svg>`,
+  Battleship: `<svg viewBox="0 0 4 1"><rect x="0.1" y="0.2" width="3.8" height="0.6" rx="0.2" fill="currentColor"/></svg>`,
+  Cruiser: `<svg viewBox="0 0 3 1"><rect x="0.1" y="0.2" width="2.8" height="0.6" rx="0.2" fill="currentColor"/></svg>`,
+  Submarine: `<svg viewBox="0 0 3 1"><ellipse cx="1.5" cy="0.5" rx="1.4" ry="0.4" fill="currentColor"/></svg>`,
+  Destroyer: `<svg viewBox="0 0 2 1"><rect x="0.1" y="0.25" width="1.8" height="0.5" rx="0.2" fill="currentColor"/></svg>`,
+};
+
+export interface PlacementControlsOptions {
+  orientation: string;
+  currentShipIndex: number;
+  onRotate: () => void;
+  onRandomize: () => void;
+  onUndo: () => void;
+}
+
 export function renderPlacementControls(
   container: HTMLElement,
   orientation: string,
   onRotate: () => void,
+  options?: Omit<PlacementControlsOptions, 'orientation' | 'onRotate'>,
 ): void {
   container.innerHTML = '';
 
-  const btn = document.createElement('button');
+  const currentIdx = options?.currentShipIndex ?? 0;
+  const totalShips = SHIP_DEFINITIONS.length;
+
+  const progress = document.createElement('div');
+  progress.classList.add('placement-progress');
+
+  const label = document.createElement('span');
+  label.classList.add('placement-progress__label');
+  label.textContent = `Ship ${currentIdx}/${totalShips} placed`;
+  progress.appendChild(label);
+
+  const icons = document.createElement('div');
+  icons.classList.add('placement-progress__ships');
+
+  for (let i = 0; i < totalShips; i++) {
+    const icon = document.createElement('div');
+    icon.classList.add('placement-progress__icon');
+    icon.title = SHIP_DEFINITIONS[i].name;
+
+    if (i < currentIdx) {
+      icon.classList.add('placement-progress__icon--placed');
+    } else if (i === currentIdx) {
+      icon.classList.add('placement-progress__icon--current');
+    }
+
+    const svgHtml = MINI_SHIP_SVGS[SHIP_DEFINITIONS[i].name];
+    if (svgHtml) {
+      icon.innerHTML = svgHtml;
+    }
+
+    icons.appendChild(icon);
+  }
+
+  progress.appendChild(icons);
+  container.appendChild(progress);
+
+  const actions = document.createElement('div');
+  actions.classList.add('placement-actions');
+
+  const rotateBtn = document.createElement('button');
   const rotateEmoji = document.createElement('span');
   rotateEmoji.setAttribute('aria-hidden', 'true');
   rotateEmoji.textContent = '🔄 ';
-  btn.appendChild(rotateEmoji);
-  btn.appendChild(document.createTextNode(`Rotate (${orientation === 'horizontal' ? 'H' : 'V'})`));
-  btn.setAttribute('aria-label', `Rotate ship orientation, currently ${orientation}`);
-  btn.classList.add('btn', 'btn--rotate');
-  btn.addEventListener('click', onRotate);
-  container.appendChild(btn);
+  rotateBtn.appendChild(rotateEmoji);
+  rotateBtn.appendChild(document.createTextNode(`Rotate (${orientation === 'horizontal' ? 'H' : 'V'})`));
+  rotateBtn.setAttribute('aria-label', `Rotate ship orientation, currently ${orientation}`);
+  rotateBtn.classList.add('btn', 'btn--rotate');
+  rotateBtn.addEventListener('click', onRotate);
+  actions.appendChild(rotateBtn);
+
+  if (options) {
+    const randomBtn = document.createElement('button');
+    randomBtn.textContent = '🎲 Randomize Fleet';
+    randomBtn.classList.add('btn', 'btn--randomize');
+    randomBtn.addEventListener('click', options.onRandomize);
+    actions.appendChild(randomBtn);
+
+    const undoBtn = document.createElement('button');
+    undoBtn.textContent = '↩ Undo';
+    undoBtn.classList.add('btn', 'btn--undo');
+    undoBtn.disabled = currentIdx === 0;
+    undoBtn.addEventListener('click', options.onUndo);
+    actions.appendChild(undoBtn);
+  }
+
+  container.appendChild(actions);
 
   const hint = document.createElement('p');
   hint.classList.add('placement-hint');
   hint.textContent = 'Click on the board to place · Press R to rotate';
   container.appendChild(hint);
+}
+
+export function triggerLockInAnimation(
+  boardEl: HTMLElement,
+  cells: Coordinate[],
+): void {
+  for (const coord of cells) {
+    const cell = boardEl.querySelector(
+      `[data-row="${coord.row}"][data-col="${coord.col}"]`,
+    ) as HTMLElement | null;
+    if (cell) {
+      cell.classList.add('cell--lock-in');
+      cell.addEventListener('animationend', () => {
+        cell.classList.remove('cell--lock-in');
+      }, { once: true });
+    }
+  }
 }
 
 export function showAttackAnimation(
