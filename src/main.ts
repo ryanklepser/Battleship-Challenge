@@ -204,7 +204,6 @@ function renderGame(state: GameState): void {
         <h1>⚓ Battlefield</h1>
       </header>
       <main role="main">
-        <div id="status" class="status" role="status" aria-live="polite"></div>
         <div id="board-tabs-container"></div>
         <div class="game-layout">
           <div id="fleet-roster" class="fleet-roster" role="complementary" aria-label="Fleet roster"></div>
@@ -219,6 +218,7 @@ function renderGame(state: GameState): void {
             </section>
           </div>
         </div>
+        <div id="status" class="status" role="status" aria-live="polite"></div>
         <div id="fire-btn-container"></div>
         <div id="game-actions" class="game-actions" role="toolbar" aria-label="Game actions"></div>
       </main>

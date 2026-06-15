@@ -695,7 +695,7 @@ function buildRosterSection(title: string, ships: Ship[]): HTMLElement {
 
     const nameSpan = document.createElement('span');
     nameSpan.classList.add('roster-name');
-    nameSpan.textContent = `${def.name} (${def.size})`;
+    nameSpan.textContent = def.name;
     li.appendChild(nameSpan);
 
     if (isSunk) {
