@@ -1,12 +1,14 @@
 :root {
   --color-ocean: #0a1628;
   --color-ocean-light: #1a2a4a;
+  --color-ocean-mid: #142240;
   --color-hit: #e74c3c;
   --color-miss: #95a5a6;
-  --color-ship: #3498db;
+  --color-ship: #60a5fa;
   --color-text: #ecf0f1;
   --color-accent: #f39c12;
   --color-sunk: #c0392b;
+  --color-glow: rgba(96, 165, 250, 0.12);
 }
 
 * {
@@ -17,7 +19,7 @@
 
 body {
   font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-  background-color: var(--color-ocean);
+  background: radial-gradient(ellipse at 50% 30%, #111d36 0%, var(--color-ocean) 70%);
   color: var(--color-text);
   min-height: 100vh;
   display: flex;
@@ -55,7 +57,10 @@ body {
   padding: 0.75rem;
   margin-bottom: 0.75rem;
   border-radius: 8px;
-  background: var(--color-ocean-light);
+  background: rgba(26, 42, 74, 0.7);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.08);
 }
 
 .status--gameover {
@@ -75,6 +80,9 @@ body {
 
 .board-wrapper {
   text-align: center;
+  background: radial-gradient(ellipse at center, rgba(30, 50, 80, 0.5) 0%, transparent 70%);
+  border-radius: 12px;
+  padding: 0.75rem;
 }
 
 .board-title {
@@ -105,10 +113,10 @@ body {
   height: 36px;
   text-align: center;
   vertical-align: middle;
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.06);
   background: var(--color-ocean-light);
   font-size: 1rem;
-  transition: background 0.15s;
+  transition: background 0.15s, box-shadow 0.15s;
   position: relative;
   overflow: visible;
 }
@@ -118,8 +126,19 @@ body {
 }
 
 .cell--clickable:hover {
-  background: rgba(52, 152, 219, 0.35);
-  box-shadow: inset 0 0 8px rgba(52, 152, 219, 0.3);
+  background: rgba(96, 165, 250, 0.35);
+  box-shadow: inset 0 0 10px rgba(96, 165, 250, 0.4);
+}
+
+/* Crosshair targeting effect */
+.cell--crosshair {
+  background: var(--color-ocean-mid);
+  box-shadow: inset 0 0 6px var(--color-glow);
+}
+
+.cell--crosshair.cell--clickable:hover {
+  background: rgba(96, 165, 250, 0.35);
+  box-shadow: inset 0 0 10px rgba(96, 165, 250, 0.4);
 }
 
 .cell--ship {
@@ -188,6 +207,13 @@ body {
   border-color: var(--color-ship);
 }
 
+/* Board depth layer */
+.board {
+  box-shadow: 0 0 40px rgba(0, 0, 0, 0.3);
+  border-radius: 4px;
+  overflow: hidden;
+}
+
 /* Game Actions */
 .game-actions {
   text-align: center;
@@ -217,7 +243,9 @@ body {
   cursor: pointer;
   transition: transform 0.15s, box-shadow 0.15s;
   color: var(--color-text);
-  background: var(--color-ocean-light);
+  background: rgba(26, 42, 74, 0.7);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
 }
 
 .btn:hover {
@@ -363,7 +391,9 @@ body {
   bottom: 100%;
   left: 50%;
   transform: translateX(-50%);
-  background: var(--color-ocean-light);
+  background: rgba(26, 42, 74, 0.8);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
   color: var(--color-text);
   padding: 4px 10px;
   border-radius: 8px;
@@ -373,7 +403,7 @@ body {
   opacity: 0;
   transition: opacity 0.3s;
   pointer-events: none;
-  border: 1px solid rgba(255, 255, 255, 0.15);
+  border: 1px solid rgba(255, 255, 255, 0.1);
 }
 
 .mascot-speech--visible {

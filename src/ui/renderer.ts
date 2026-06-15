@@ -30,6 +30,41 @@ function getShipCellIndex(
   return { index: idx, total: ship.size, orientation: isHorizontal ? 'horizontal' : 'vertical' };
 }
 
+function addCrosshairListeners(table: HTMLTableElement): void {
+  let activeCells: HTMLElement[] = [];
+
+  table.addEventListener('mouseover', (e: Event) => {
+    const target = e.target as HTMLElement;
+    const cell = target.closest('.cell') as HTMLElement | null;
+    if (!cell) return;
+
+    const row = cell.dataset.row;
+    const col = cell.dataset.col;
+    if (row === undefined || col === undefined) return;
+
+    for (const el of activeCells) {
+      el.classList.remove('cell--crosshair');
+    }
+    activeCells = [];
+
+    const cells = table.querySelectorAll<HTMLElement>('.cell');
+    for (const c of cells) {
+      if (c === cell) continue;
+      if (c.dataset.row === row || c.dataset.col === col) {
+        c.classList.add('cell--crosshair');
+        activeCells.push(c);
+      }
+    }
+  });
+
+  table.addEventListener('mouseleave', () => {
+    for (const el of activeCells) {
+      el.classList.remove('cell--crosshair');
+    }
+    activeCells = [];
+  });
+}
+
 export function renderBoard(
   board: Board,
   container: HTMLElement,
@@ -108,6 +143,10 @@ export function renderBoard(
     }
 
     table.appendChild(tr);
+  }
+
+  if (onCellClick) {
+    addCrosshairListeners(table);
   }
 
   container.appendChild(table);
