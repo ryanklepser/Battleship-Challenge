@@ -1,5 +1,6 @@
 import type { Board, GameState, Coordinate, Ship, Difficulty } from '../game/types';
 import { BOARD_SIZE, SHIP_DEFINITIONS } from '../game/types';
+import { formatCoordinate } from '../utils/helpers';
 
 const COL_LABELS = 'ABCDEFGHIJ';
 
@@ -209,6 +210,85 @@ export function renderBoard(
   }
 
   container.appendChild(table);
+}
+
+export function applyCrosshair(
+  container: HTMLElement,
+  row: number,
+  col: number,
+): void {
+  clearCrosshair(container);
+
+  const cells = container.querySelectorAll<HTMLElement>('.cell');
+  cells.forEach((cell) => {
+    const r = parseInt(cell.dataset.row ?? '-1');
+    const c = parseInt(cell.dataset.col ?? '-1');
+    if (r === row && c === col) {
+      cell.classList.add('crosshair-center');
+    } else if (r === row) {
+      cell.classList.add('crosshair-row');
+    } else if (c === col) {
+      cell.classList.add('crosshair-col');
+    }
+  });
+
+  let tooltip = container.querySelector<HTMLElement>('.crosshair-tooltip');
+  if (!tooltip) {
+    tooltip = document.createElement('div');
+    tooltip.classList.add('crosshair-tooltip');
+    container.style.position = 'relative';
+    container.appendChild(tooltip);
+  }
+
+  const target = container.querySelector<HTMLElement>(
+    `[data-row="${row}"][data-col="${col}"]`,
+  );
+  if (target) {
+    const label = formatCoordinate({ row, col });
+    tooltip.textContent = `${label[0]}-${label.slice(1)}`;
+    const containerRect = container.getBoundingClientRect();
+    const cellRect = target.getBoundingClientRect();
+    tooltip.style.left = `${cellRect.left - containerRect.left + cellRect.width / 2}px`;
+    tooltip.style.top = `${cellRect.top - containerRect.top - 4}px`;
+    tooltip.classList.add('crosshair-tooltip--visible');
+  }
+}
+
+export function clearCrosshair(container: HTMLElement): void {
+  container
+    .querySelectorAll('.crosshair-row, .crosshair-col, .crosshair-center')
+    .forEach((el) =>
+      el.classList.remove('crosshair-row', 'crosshair-col', 'crosshair-center'),
+    );
+
+  const tooltip = container.querySelector<HTMLElement>('.crosshair-tooltip');
+  if (tooltip) {
+    tooltip.classList.remove('crosshair-tooltip--visible');
+  }
+}
+
+export function flashCrosshair(
+  container: HTMLElement,
+  row: number,
+  col: number,
+): Promise<void> {
+  const cells = container.querySelectorAll<HTMLElement>('.cell');
+  const targets: HTMLElement[] = [];
+  cells.forEach((cell) => {
+    const r = parseInt(cell.dataset.row ?? '-1');
+    const c = parseInt(cell.dataset.col ?? '-1');
+    if (r === row || c === col) {
+      cell.classList.add('crosshair-flash');
+      targets.push(cell);
+    }
+  });
+
+  return new Promise((resolve) => {
+    setTimeout(() => {
+      targets.forEach((cell) => cell.classList.remove('crosshair-flash'));
+      resolve();
+    }, 300);
+  });
 }
 
 export function updatePreview(

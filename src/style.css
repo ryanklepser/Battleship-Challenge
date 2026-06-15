@@ -356,6 +356,82 @@ body {
   filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.3));
 }
 
+/* Crosshair Targeting */
+.crosshair-row,
+.crosshair-col {
+  background: rgba(52, 152, 219, 0.12) !important;
+  box-shadow: inset 0 0 6px rgba(52, 152, 219, 0.15);
+}
+
+.crosshair-center {
+  background: rgba(52, 152, 219, 0.35) !important;
+  box-shadow: inset 0 0 10px rgba(52, 152, 219, 0.3);
+}
+
+.crosshair-center::before,
+.crosshair-center::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  border-radius: 50%;
+  border: 1.5px solid rgba(52, 152, 219, 0.6);
+  pointer-events: none;
+  transform: translate(-50%, -50%);
+}
+
+.crosshair-center::before {
+  width: 28px;
+  height: 28px;
+  animation: reticle-pulse 1.4s ease-out infinite;
+}
+
+.crosshair-center::after {
+  width: 18px;
+  height: 18px;
+  animation: reticle-pulse 1.4s ease-out 0.3s infinite;
+}
+
+@keyframes reticle-pulse {
+  0% {
+    transform: translate(-50%, -50%) scale(0.6);
+    opacity: 0.9;
+  }
+  100% {
+    transform: translate(-50%, -50%) scale(1.6);
+    opacity: 0;
+  }
+}
+
+/* Crosshair Flash */
+.crosshair-flash {
+  background: rgba(52, 152, 219, 0.55) !important;
+  transition: background 0.15s ease-out;
+}
+
+/* Crosshair Tooltip */
+.crosshair-tooltip {
+  position: absolute;
+  pointer-events: none;
+  z-index: 50;
+  background: rgba(10, 22, 40, 0.92);
+  color: var(--color-accent);
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  padding: 2px 7px;
+  border-radius: 4px;
+  border: 1px solid rgba(52, 152, 219, 0.4);
+  transform: translate(-50%, -100%);
+  opacity: 0;
+  transition: opacity 0.12s;
+  white-space: nowrap;
+}
+
+.crosshair-tooltip--visible {
+  opacity: 1;
+}
+
 /* Placement Preview */
 .cell--preview-valid {
   background: rgba(46, 204, 113, 0.4);
