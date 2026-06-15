@@ -241,6 +241,7 @@ body {
   transition: background 0.15s, box-shadow 0.15s;
   position: relative;
   overflow: visible;
+  will-change: transform, opacity;
 }
 
 .cell--clickable {
@@ -713,6 +714,7 @@ body {
   border-radius: 50%;
   z-index: 300;
   pointer-events: none;
+  will-change: transform, left, top;
   box-shadow:
     0 0 12px rgba(243, 156, 18, 0.8),
     0 0 24px rgba(231, 76, 60, 0.4);
@@ -730,6 +732,33 @@ body {
   filter: blur(2px);
 }
 
+/* Missile Trail Ghost Elements */
+.missile-trail {
+  position: fixed;
+  width: 12px;
+  height: 12px;
+  background: radial-gradient(circle, #f39c12, transparent);
+  border-radius: 50%;
+  z-index: 299;
+  pointer-events: none;
+  will-change: transform, opacity;
+}
+
+.missile-trail--1 {
+  opacity: 0.6;
+  transform: scale(0.8);
+}
+
+.missile-trail--2 {
+  opacity: 0.35;
+  transform: scale(0.6);
+}
+
+.missile-trail--3 {
+  opacity: 0.15;
+  transform: scale(0.4);
+}
+
 /* Explosion Animation */
 .explosion {
   position: absolute;
@@ -739,7 +768,75 @@ body {
   background: radial-gradient(circle, #f39c12 0%, #e74c3c 40%, transparent 70%);
   z-index: 100;
   pointer-events: none;
+  will-change: transform, opacity;
   animation: explode 0.6s ease-out forwards;
+}
+
+/* Miss Splash Animation */
+.splash-ring {
+  position: absolute;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  border: 2px solid rgba(149, 165, 166, 0.8);
+  z-index: 100;
+  pointer-events: none;
+  will-change: transform, opacity;
+  animation: splash 0.5s ease-out forwards;
+}
+
+@keyframes splash {
+  0% {
+    transform: scale(0.3);
+    opacity: 1;
+  }
+  70% {
+    transform: scale(1.4);
+    opacity: 0.5;
+  }
+  100% {
+    transform: scale(1.8);
+    opacity: 0;
+  }
+}
+
+/* Board Shake Animation */
+.board-shake {
+  animation: board-shake 150ms ease-in-out;
+}
+
+@keyframes board-shake {
+  0%, 100% {
+    transform: translate(0, 0);
+  }
+  25% {
+    transform: translate(-2px, 1px);
+  }
+  50% {
+    transform: translate(2px, -1px);
+  }
+  75% {
+    transform: translate(-1px, 2px);
+  }
+}
+
+/* Cell Reveal Wave Animation */
+.cell--reveal {
+  opacity: 0;
+  transform: scale(0.8);
+  animation: cell-reveal 0.3s ease-out forwards;
+  will-change: transform, opacity;
+}
+
+@keyframes cell-reveal {
+  0% {
+    opacity: 0;
+    transform: scale(0.8);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
 }
 
 @keyframes explode {

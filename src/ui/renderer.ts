@@ -79,6 +79,7 @@ export function renderBoard(
   hideShips: boolean,
   onCellClick?: (row: number, col: number) => void,
   ships?: Ship[],
+  staggerReveal?: boolean,
 ): void {
   container.innerHTML = '';
 
@@ -122,6 +123,10 @@ export function renderBoard(
       const stateLabel = cellStateLabel(cell.state, cell.shipName, hideShips);
       td.setAttribute('aria-label', `Cell ${coordLabel}, ${stateLabel}`);
 
+      if (staggerReveal) {
+        td.classList.add('cell--reveal');
+        td.style.animationDelay = `${(row + col) * 10}ms`;
+      }
       switch (cell.state) {
         case 'hit': {
           td.classList.add('cell--hit');
@@ -365,6 +370,16 @@ export function showAttackAnimation(
   missile.classList.add('missile-arc');
   document.body.appendChild(missile);
 
+  const trails: HTMLElement[] = [];
+  for (let i = 1; i <= 3; i++) {
+    const trail = document.createElement('div');
+    trail.classList.add('missile-trail', `missile-trail--${i}`);
+    document.body.appendChild(trail);
+    trails.push(trail);
+  }
+
+  const trailHistory: Array<{ x: number; y: number }> = [];
+
   const duration = 600;
   const startTime = performance.now();
   const peakHeight = 120;
@@ -380,6 +395,17 @@ export function showAttackAnimation(
     missile.style.left = `${x - 8}px`;
     missile.style.top = `${y - 8}px`;
 
+    trailHistory.push({ x, y });
+
+    for (let i = 0; i < trails.length; i++) {
+      const trailIdx = trailHistory.length - 1 - (i + 1) * 4;
+      if (trailIdx >= 0) {
+        const pos = trailHistory[trailIdx];
+        trails[i].style.left = `${pos.x - 6}px`;
+        trails[i].style.top = `${pos.y - 6}px`;
+      }
+    }
+
     const angle = Math.atan2(
       (endY - startY) - peakHeight * (2 - 4 * t),
       (endX - startX),
@@ -390,6 +416,7 @@ export function showAttackAnimation(
       requestAnimationFrame(animate);
     } else {
       missile.remove();
+      for (const trail of trails) trail.remove();
 
       if (isHit) {
         const boardRect = targetBoardEl.getBoundingClientRect();
@@ -406,7 +433,19 @@ export function showAttackAnimation(
           onComplete();
         }, 600);
       } else {
-        onComplete();
+        const boardRect = targetBoardEl.getBoundingClientRect();
+        targetBoardEl.style.position = 'relative';
+
+        const splash = document.createElement('div');
+        splash.classList.add('splash-ring');
+        splash.style.left = `${targetRect.left - boardRect.left + targetRect.width / 2 - 18}px`;
+        splash.style.top = `${targetRect.top - boardRect.top + targetRect.height / 2 - 18}px`;
+        targetBoardEl.appendChild(splash);
+
+        setTimeout(() => {
+          splash.remove();
+          onComplete();
+        }, 500);
       }
     }
   }
@@ -468,6 +507,15 @@ function buildRosterSection(title: string, ships: Ship[]): HTMLElement {
 
   section.appendChild(list);
   return section;
+}
+
+export function shakeBoard(boardEl: HTMLElement): void {
+  boardEl.classList.remove('board-shake');
+  void boardEl.offsetWidth;
+  boardEl.classList.add('board-shake');
+  boardEl.addEventListener('animationend', () => {
+    boardEl.classList.remove('board-shake');
+  }, { once: true });
 }
 
 export function showResultPopup(
