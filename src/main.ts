@@ -529,12 +529,12 @@ function renderGame(state: GameState): void {
     if (!result) return;
 
     animating = true;
+    update();
     mascotShoutFire('player');
     playMissileLaunch();
     flashCrosshair(aiBoardEl, row, col).then(() => {
       clearCrosshair(aiBoardEl);
     });
-    update();
 
     showAttackAnimation(
       playerBoardEl,
