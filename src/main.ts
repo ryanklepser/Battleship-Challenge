@@ -14,6 +14,9 @@ import {
   renderShareButton,
   savePersonalBest,
   computeAccuracy,
+  applyCrosshair,
+  clearCrosshair,
+  flashCrosshair,
 } from './ui/renderer';
 import {
   createGameState,
@@ -171,6 +174,23 @@ function renderGame(state: GameState): void {
     }
   }, { signal });
 
+  aiBoardEl.addEventListener('mouseover', (e) => {
+    if (state.phase !== 'battle' || animating) return;
+    const cell = (e.target as HTMLElement).closest('.cell') as HTMLElement | null;
+    if (cell) {
+      const row = parseInt(cell.dataset.row ?? '0');
+      const col = parseInt(cell.dataset.col ?? '0');
+      applyCrosshair(aiBoardEl, row, col);
+    }
+  }, { signal });
+
+  aiBoardEl.addEventListener('mouseout', (e) => {
+    const related = (e as MouseEvent).relatedTarget as HTMLElement | null;
+    if (!related || !aiBoardEl.contains(related)) {
+      clearCrosshair(aiBoardEl);
+    }
+  }, { signal });
+
   function handlePlacementClick(row: number, col: number): void {
     const placed = placeCurrentShip(state, { row, col });
     if (placed) {
@@ -194,6 +214,9 @@ function renderGame(state: GameState): void {
     if (!result) return;
 
     animating = true;
+    flashCrosshair(aiBoardEl, row, col).then(() => {
+      clearCrosshair(aiBoardEl);
+    });
     update();
 
     showAttackAnimation(
