@@ -4,7 +4,7 @@ import type {
   Coordinate,
   AttackResult,
 } from './types';
-import { SHIP_DEFINITIONS } from './types';
+import { BOARD_SIZE, SHIP_DEFINITIONS } from './types';
 import {
   createEmptyBoard,
   createShip,
@@ -153,6 +153,43 @@ export function playerAttack(
     gameOver,
     winner: state.winner,
   };
+}
+
+export function undoLastPlacement(state: GameState): boolean {
+  if (!state.placement || state.phase !== 'placement') return false;
+  if (state.placement.currentShipIndex === 0) return false;
+
+  state.placement.currentShipIndex--;
+  const ship = state.playerShips[state.placement.currentShipIndex];
+
+  for (const coord of ship.coordinates) {
+    state.playerBoard[coord.row][coord.col] = { state: 'empty', shipName: null };
+  }
+  ship.coordinates = [];
+
+  return true;
+}
+
+export function randomizePlayerFleet(state: GameState): void {
+  if (state.phase !== 'placement') return;
+
+  for (const ship of state.playerShips) {
+    for (const coord of ship.coordinates) {
+      state.playerBoard[coord.row][coord.col] = { state: 'empty', shipName: null };
+    }
+    ship.coordinates = [];
+  }
+
+  for (let r = 0; r < BOARD_SIZE; r++) {
+    for (let c = 0; c < BOARD_SIZE; c++) {
+      state.playerBoard[r][c] = { state: 'empty', shipName: null };
+    }
+  }
+
+  placeShipsRandomly(state.playerBoard, state.playerShips);
+
+  state.phase = 'battle';
+  state.placement = null;
 }
 
 export async function aiAttack(
