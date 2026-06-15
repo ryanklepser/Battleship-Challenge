@@ -1,5 +1,6 @@
 import './style.css';
 import type { GameState, Difficulty } from './game/types';
+import { BOARD_SIZE } from './game/types';
 import {
   renderBoard,
   renderStatus,
@@ -47,11 +48,11 @@ function showMenu(): void {
   document.body.appendChild(bg);
 
   app.innerHTML = `
-    <header class="header">
+    <header class="header" role="banner">
       <h1>⚓ Battlefield</h1>
       <p>Sink Devin's fleet before Devin sinks yours!</p>
     </header>
-    <main id="game-root"></main>
+    <main id="game-root" role="main"></main>
   `;
 
   const gameRoot = document.querySelector<HTMLDivElement>('#game-root')!;
@@ -70,21 +71,23 @@ function renderGame(state: GameState): void {
   const { signal } = gameAbort;
 
   app.innerHTML = `
-    <header class="header">
+    <header class="header" role="banner">
       <h1>⚓ Battlefield</h1>
     </header>
-    <div id="status" class="status"></div>
-    <div class="boards">
-      <div class="board-wrapper">
-        <h2 class="board-title">Your Fleet</h2>
-        <div id="player-board"></div>
+    <main role="main">
+      <div id="status" class="status" role="status" aria-live="polite"></div>
+      <div class="boards">
+        <section class="board-wrapper" aria-label="Your Fleet">
+          <h2 class="board-title">Your Fleet</h2>
+          <div id="player-board"></div>
+        </section>
+        <section class="board-wrapper" aria-label="Devin's Waters">
+          <h2 class="board-title">Devin's Waters</h2>
+          <div id="ai-board"></div>
+        </section>
       </div>
-      <div class="board-wrapper">
-        <h2 class="board-title">Devin's Waters</h2>
-        <div id="ai-board"></div>
-      </div>
-    </div>
-    <div id="game-actions" class="game-actions"></div>
+      <div id="game-actions" class="game-actions" role="toolbar" aria-label="Game actions"></div>
+    </main>
   `;
 
   const statusEl = document.querySelector<HTMLDivElement>('#status')!;
@@ -250,6 +253,46 @@ function renderGame(state: GameState): void {
     btn.addEventListener('click', showMenu);
     container.appendChild(btn);
   }
+
+  function handleGridKeydown(e: KeyboardEvent, boardEl: HTMLElement, clickHandler?: (row: number, col: number) => void): void {
+    const target = e.target as HTMLElement;
+    if (!target.classList.contains('cell')) return;
+
+    const row = parseInt(target.dataset.row ?? '0');
+    const col = parseInt(target.dataset.col ?? '0');
+    let nextRow = row;
+    let nextCol = col;
+
+    switch (e.key) {
+      case 'ArrowUp':    nextRow = Math.max(0, row - 1); break;
+      case 'ArrowDown':  nextRow = Math.min(BOARD_SIZE - 1, row + 1); break;
+      case 'ArrowLeft':  nextCol = Math.max(0, col - 1); break;
+      case 'ArrowRight': nextCol = Math.min(BOARD_SIZE - 1, col + 1); break;
+      case 'Enter':
+      case ' ':
+        e.preventDefault();
+        if (clickHandler) clickHandler(row, col);
+        return;
+      default:
+        return;
+    }
+
+    e.preventDefault();
+    const nextCell = boardEl.querySelector(`[data-row="${nextRow}"][data-col="${nextCol}"]`) as HTMLElement | null;
+    if (nextCell) nextCell.focus();
+  }
+
+  playerBoardEl.addEventListener('keydown', (e) => {
+    if (state.phase === 'placement') {
+      handleGridKeydown(e, playerBoardEl, handlePlacementClick);
+    }
+  }, { signal });
+
+  aiBoardEl.addEventListener('keydown', (e) => {
+    if (state.phase === 'battle' && !animating) {
+      handleGridKeydown(e, aiBoardEl, handlePlayerClick);
+    }
+  }, { signal });
 
   document.addEventListener('keydown', (e) => {
     if (e.key === 'r' || e.key === 'R') {
