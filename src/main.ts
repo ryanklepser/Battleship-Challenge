@@ -9,6 +9,7 @@ import {
   showAttackAnimation,
   showResultPopup,
   updatePreview,
+  renderFleetRoster,
 } from './ui/renderer';
 import {
   createGameState,
@@ -76,15 +77,18 @@ function renderGame(state: GameState): void {
     </header>
     <main role="main">
       <div id="status" class="status" role="status" aria-live="polite"></div>
-      <div class="boards">
-        <section class="board-wrapper" aria-label="Your Fleet">
-          <h2 class="board-title">Your Fleet</h2>
-          <div id="player-board"></div>
-        </section>
-        <section class="board-wrapper" aria-label="Devin's Waters">
-          <h2 class="board-title">Devin's Waters</h2>
-          <div id="ai-board"></div>
-        </section>
+      <div class="game-layout">
+        <div id="fleet-roster" class="fleet-roster" role="complementary" aria-label="Fleet roster"></div>
+        <div class="boards">
+          <section class="board-wrapper" aria-label="Your Fleet">
+            <h2 class="board-title">Your Fleet</h2>
+            <div id="player-board"></div>
+          </section>
+          <section class="board-wrapper" aria-label="Devin's Waters">
+            <h2 class="board-title">Devin's Waters</h2>
+            <div id="ai-board"></div>
+          </section>
+        </div>
       </div>
       <div id="game-actions" class="game-actions" role="toolbar" aria-label="Game actions"></div>
     </main>
@@ -94,6 +98,7 @@ function renderGame(state: GameState): void {
   const playerBoardEl = document.querySelector<HTMLDivElement>('#player-board')!;
   const aiBoardEl = document.querySelector<HTMLDivElement>('#ai-board')!;
   const actionsEl = document.querySelector<HTMLDivElement>('#game-actions')!;
+  const rosterEl = document.querySelector<HTMLDivElement>('#fleet-roster')!;
 
   mountMascot(document.body);
   updateMascotForPhase(state.phase, state.winner);
@@ -102,6 +107,7 @@ function renderGame(state: GameState): void {
 
   function update(): void {
     renderStatus(state, statusEl);
+    renderFleetRoster(state, rosterEl);
     updateMascotForPhase(state.phase, state.winner);
 
     if (state.phase === 'placement') {
