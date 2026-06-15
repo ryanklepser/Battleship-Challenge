@@ -220,6 +220,186 @@ body {
   padding: 1rem 0;
 }
 
+/* Landing Screen Ocean Background */
+.landing-bg {
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  overflow: hidden;
+  background:
+    linear-gradient(180deg, #0a1628 0%, #0d1f3c 40%, #122a50 70%, #0a1628 100%);
+}
+
+.landing-bg::before,
+.landing-bg::after {
+  content: '';
+  position: absolute;
+  left: -50%;
+  width: 200%;
+  height: 200%;
+  border-radius: 40%;
+  opacity: 0.15;
+}
+
+.landing-bg::before {
+  top: -60%;
+  background: radial-gradient(ellipse at center, #1a4a7a 0%, transparent 70%);
+  animation: ocean-drift 8s ease-in-out infinite;
+}
+
+.landing-bg::after {
+  top: -40%;
+  background: radial-gradient(ellipse at center, #0e3460 0%, transparent 70%);
+  animation: ocean-drift 12s ease-in-out infinite reverse;
+}
+
+@keyframes ocean-drift {
+  0%, 100% { transform: translateX(-5%) rotate(0deg); }
+  50% { transform: translateX(5%) rotate(2deg); }
+}
+
+/* Wave Layers */
+.wave-layer {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 200%;
+  height: 120px;
+  background: repeating-linear-gradient(
+    90deg,
+    transparent,
+    transparent 50px,
+    rgba(52, 152, 219, 0.04) 50px,
+    rgba(52, 152, 219, 0.04) 100px
+  );
+  opacity: 0.5;
+}
+
+.wave-layer--1 {
+  animation: wave-scroll 20s linear infinite;
+  bottom: 0;
+}
+
+.wave-layer--2 {
+  animation: wave-scroll 28s linear infinite reverse;
+  bottom: 40px;
+  opacity: 0.3;
+}
+
+.wave-layer--3 {
+  animation: wave-scroll 35s linear infinite;
+  bottom: 80px;
+  opacity: 0.2;
+}
+
+@keyframes wave-scroll {
+  0% { transform: translateX(0); }
+  100% { transform: translateX(-50%); }
+}
+
+/* Radar Sweep Hero */
+.radar-hero {
+  position: relative;
+  width: 180px;
+  height: 180px;
+  margin: 0 auto 1.5rem;
+  border-radius: 50%;
+  border: 2px solid rgba(46, 204, 113, 0.25);
+  background: radial-gradient(circle, rgba(10, 22, 40, 0.9) 0%, transparent 70%);
+  overflow: hidden;
+}
+
+.radar-hero::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  background:
+    radial-gradient(circle at center, transparent 30%, rgba(46, 204, 113, 0.05) 60%, transparent 61%),
+    radial-gradient(circle at center, transparent 60%, rgba(46, 204, 113, 0.04) 90%, transparent 91%);
+}
+
+.radar-hero::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 50%;
+  width: 50%;
+  height: 50%;
+  transform-origin: bottom left;
+  background: conic-gradient(
+    from 0deg,
+    transparent 0deg,
+    rgba(46, 204, 113, 0.3) 30deg,
+    transparent 60deg
+  );
+  animation: radar-sweep 3s linear infinite;
+  border-radius: 50% 50% 0 0;
+}
+
+.radar-crosshair {
+  position: absolute;
+  inset: 0;
+}
+
+.radar-crosshair::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 10%;
+  right: 10%;
+  height: 1px;
+  background: rgba(46, 204, 113, 0.2);
+}
+
+.radar-crosshair::after {
+  content: '';
+  position: absolute;
+  left: 50%;
+  top: 10%;
+  bottom: 10%;
+  width: 1px;
+  background: rgba(46, 204, 113, 0.2);
+}
+
+.radar-blip {
+  position: absolute;
+  width: 6px;
+  height: 6px;
+  background: rgba(46, 204, 113, 0.8);
+  border-radius: 50%;
+  box-shadow: 0 0 6px rgba(46, 204, 113, 0.6);
+  animation: blip-fade 3s ease-in-out infinite;
+}
+
+.radar-blip:nth-child(1) {
+  top: 30%;
+  left: 60%;
+  animation-delay: 0s;
+}
+
+.radar-blip:nth-child(2) {
+  top: 55%;
+  left: 35%;
+  animation-delay: 1s;
+}
+
+.radar-blip:nth-child(3) {
+  top: 40%;
+  left: 70%;
+  animation-delay: 2s;
+}
+
+@keyframes radar-sweep {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+@keyframes blip-fade {
+  0%, 100% { opacity: 0.3; transform: scale(0.8); }
+  50% { opacity: 1; transform: scale(1.2); }
+}
+
 /* Difficulty Selector */
 .difficulty-selector {
   text-align: center;
@@ -255,14 +435,79 @@ body {
 
 .btn--easy {
   border-color: #2ecc71;
+  animation: pulse-easy 2.5s ease-in-out infinite;
 }
 
 .btn--medium {
   border-color: var(--color-accent);
+  animation: pulse-medium 2.5s ease-in-out infinite;
+  animation-delay: 0.4s;
 }
 
 .btn--expert {
   border-color: var(--color-hit);
+  animation: pulse-expert 2.5s ease-in-out infinite;
+  animation-delay: 0.8s;
+}
+
+@keyframes pulse-easy {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(46, 204, 113, 0.4); }
+  50% { box-shadow: 0 0 12px 3px rgba(46, 204, 113, 0.25); }
+}
+
+@keyframes pulse-medium {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(243, 156, 18, 0.4); }
+  50% { box-shadow: 0 0 12px 3px rgba(243, 156, 18, 0.25); }
+}
+
+@keyframes pulse-expert {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(231, 76, 60, 0.4); }
+  50% { box-shadow: 0 0 12px 3px rgba(231, 76, 60, 0.25); }
+}
+
+/* Difficulty Tooltips */
+.btn-wrapper {
+  position: relative;
+  display: inline-block;
+  margin: 0.5rem;
+}
+
+.btn-wrapper .btn {
+  margin: 0;
+}
+
+.btn-tooltip {
+  position: absolute;
+  bottom: calc(100% + 10px);
+  left: 50%;
+  transform: translateX(-50%) translateY(4px);
+  background: var(--color-ocean-light);
+  color: var(--color-text);
+  padding: 6px 12px;
+  border-radius: 6px;
+  font-size: 0.8rem;
+  font-weight: 400;
+  white-space: nowrap;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.2s, transform 0.2s;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  z-index: 10;
+}
+
+.btn-tooltip::after {
+  content: '';
+  position: absolute;
+  top: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  border: 5px solid transparent;
+  border-top-color: var(--color-ocean-light);
+}
+
+.btn-wrapper:hover .btn-tooltip {
+  opacity: 1;
+  transform: translateX(-50%) translateY(0);
 }
 
 .btn--play-again {

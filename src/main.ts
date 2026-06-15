@@ -29,8 +29,23 @@ import {
 const app = document.querySelector<HTMLDivElement>('#app')!;
 let gameAbort: AbortController | null = null;
 
+function removeLandingBg(): void {
+  document.querySelector('.landing-bg')?.remove();
+}
+
 function showMenu(): void {
   removeMascot();
+  removeLandingBg();
+
+  const bg = document.createElement('div');
+  bg.classList.add('landing-bg');
+  bg.innerHTML = `
+    <div class="wave-layer wave-layer--1"></div>
+    <div class="wave-layer wave-layer--2"></div>
+    <div class="wave-layer wave-layer--3"></div>
+  `;
+  document.body.appendChild(bg);
+
   app.innerHTML = `
     <header class="header">
       <h1>⚓ Battlefield</h1>
@@ -44,6 +59,7 @@ function showMenu(): void {
 }
 
 function startGame(difficulty: Difficulty): void {
+  removeLandingBg();
   const state = createGameState(difficulty);
   renderGame(state);
 }
