@@ -74,6 +74,29 @@ body {
   font-size: 1rem;
 }
 
+/* Audio Controls */
+.audio-controls {
+  display: flex;
+  justify-content: center;
+  gap: 0.4rem;
+  margin-top: 0.4rem;
+}
+
+.btn--audio {
+  padding: 0.3rem 0.6rem;
+  font-size: 1.2rem;
+  min-width: 2.4rem;
+  border-color: var(--color-miss);
+  background: var(--color-ocean-light);
+  border-radius: 6px;
+  line-height: 1;
+}
+
+.btn--audio:hover {
+  border-color: var(--color-accent);
+  box-shadow: 0 0 8px rgba(243, 156, 18, 0.3);
+}
+
 /* Status */
 .status {
   font-family: var(--font-display);

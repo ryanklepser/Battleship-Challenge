@@ -714,6 +714,36 @@ export function shakeBoard(boardEl: HTMLElement): void {
   }, { once: true });
 }
 
+export function renderMuteButton(
+  header: HTMLElement,
+  muted: boolean,
+  ambientOn: boolean,
+  onToggleMute: () => void,
+  onToggleAmbient: () => void,
+): void {
+  let container = header.querySelector<HTMLDivElement>('.audio-controls');
+  if (!container) {
+    container = document.createElement('div');
+    container.classList.add('audio-controls');
+    header.appendChild(container);
+  }
+  container.innerHTML = '';
+
+  const muteBtn = document.createElement('button');
+  muteBtn.classList.add('btn', 'btn--audio');
+  muteBtn.title = muted ? 'Unmute sound effects' : 'Mute sound effects';
+  muteBtn.textContent = muted ? '🔇' : '🔊';
+  muteBtn.addEventListener('click', onToggleMute);
+  container.appendChild(muteBtn);
+
+  const ambientBtn = document.createElement('button');
+  ambientBtn.classList.add('btn', 'btn--audio', 'btn--ambient');
+  ambientBtn.title = ambientOn ? 'Disable ambient sounds' : 'Enable ambient sounds';
+  ambientBtn.textContent = ambientOn ? '🌊' : '🔕';
+  ambientBtn.addEventListener('click', onToggleAmbient);
+  container.appendChild(ambientBtn);
+}
+
 export function showResultPopup(
   result: 'hit' | 'miss' | 'sunk',
   shipName?: string,
