@@ -38,6 +38,13 @@ export interface PlacementState {
   orientation: Orientation;
 }
 
+export interface GameStats {
+  playerShotsFired: number;
+  aiShotsFired: number;
+  playerHits: number;
+  gameStartTime: number | null;
+}
+
 export interface GameState {
   phase: GamePhase;
   playerBoard: Board;
@@ -48,6 +55,7 @@ export interface GameState {
   difficulty: Difficulty;
   winner: 'player' | 'ai' | null;
   placement: PlacementState | null;
+  stats: GameStats;
 }
 
 export const BOARD_SIZE = 10;

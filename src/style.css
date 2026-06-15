@@ -1055,6 +1055,189 @@ body {
   }
 }
 
+/* ===== Game Over Overlay ===== */
+.gameover-overlay {
+  position: fixed;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 500;
+  opacity: 0;
+  transition: opacity 0.6s ease;
+  overflow: hidden;
+}
+
+.gameover-overlay--visible {
+  opacity: 1;
+}
+
+.gameover-overlay--victory {
+  background: radial-gradient(ellipse at center, rgba(10, 22, 40, 0.92) 0%, rgba(10, 22, 40, 0.98) 100%);
+}
+
+.gameover-overlay--defeat {
+  background: radial-gradient(ellipse at center, rgba(80, 10, 10, 0.92) 0%, rgba(40, 5, 5, 0.98) 100%);
+  animation: defeat-pulse 2s ease-in-out infinite;
+}
+
+@keyframes defeat-pulse {
+  0%, 100% { background-color: rgba(80, 10, 10, 0); }
+  50% { background-color: rgba(120, 15, 15, 0.1); }
+}
+
+.gameover-content {
+  text-align: center;
+  padding: 3rem;
+}
+
+/* Victory Title */
+.gameover-title--victory {
+  font-size: 4rem;
+  font-weight: 900;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  color: #f39c12;
+  text-shadow:
+    0 0 40px rgba(243, 156, 18, 0.8),
+    0 0 80px rgba(243, 156, 18, 0.4),
+    0 4px 12px rgba(0, 0, 0, 0.5);
+  animation: victory-scale-in 0.8s cubic-bezier(0.34, 1.56, 0.64, 1) forwards,
+             victory-glow 2s ease-in-out infinite 0.8s;
+  transform: scale(0);
+}
+
+@keyframes victory-scale-in {
+  0% { transform: scale(0); opacity: 0; }
+  100% { transform: scale(1); opacity: 1; }
+}
+
+@keyframes victory-glow {
+  0%, 100% {
+    text-shadow:
+      0 0 40px rgba(243, 156, 18, 0.8),
+      0 0 80px rgba(243, 156, 18, 0.4),
+      0 4px 12px rgba(0, 0, 0, 0.5);
+  }
+  50% {
+    text-shadow:
+      0 0 60px rgba(243, 156, 18, 1),
+      0 0 120px rgba(243, 156, 18, 0.6),
+      0 0 200px rgba(46, 204, 113, 0.3),
+      0 4px 12px rgba(0, 0, 0, 0.5);
+  }
+}
+
+/* Defeat Title */
+.gameover-title--defeat {
+  font-size: 4rem;
+  font-weight: 900;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  color: #e74c3c;
+  text-shadow:
+    0 0 40px rgba(231, 76, 60, 0.8),
+    0 0 80px rgba(231, 76, 60, 0.4),
+    0 4px 12px rgba(0, 0, 0, 0.5);
+  animation: defeat-shake 0.6s cubic-bezier(0.36, 0.07, 0.19, 0.97) forwards;
+}
+
+@keyframes defeat-shake {
+  0% { transform: translateX(0) scale(0.8); opacity: 0; }
+  10% { transform: translateX(-15px) scale(1); opacity: 1; }
+  20% { transform: translateX(15px); }
+  30% { transform: translateX(-10px); }
+  40% { transform: translateX(10px); }
+  50% { transform: translateX(-6px); }
+  60% { transform: translateX(6px); }
+  70% { transform: translateX(-3px); }
+  80% { transform: translateX(3px); }
+  90% { transform: translateX(-1px); }
+  100% { transform: translateX(0); }
+}
+
+/* Stats */
+.gameover-stats {
+  margin: 1.5rem 0 2rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.gameover-stat {
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: var(--color-text);
+  background: rgba(255, 255, 255, 0.08);
+  padding: 0.4rem 0.8rem;
+  border-radius: 6px;
+}
+
+.gameover-stat-divider {
+  color: var(--color-miss);
+  font-size: 1.2rem;
+}
+
+/* Actions */
+.gameover-actions {
+  display: flex;
+  gap: 1rem;
+  justify-content: center;
+  flex-wrap: wrap;
+  margin-top: 1rem;
+}
+
+/* Confetti */
+.confetti-particle {
+  position: absolute;
+  top: -10px;
+  border-radius: 2px;
+  opacity: 0;
+  animation: confetti-fall linear forwards;
+  transform: rotate(0deg);
+}
+
+@keyframes confetti-fall {
+  0% {
+    transform: translateY(0) rotate(0deg);
+    opacity: 1;
+  }
+  100% {
+    transform: translateY(100vh) rotate(720deg);
+    opacity: 0;
+  }
+}
+
+/* Responsive overrides for game over */
+@media (max-width: 768px) {
+  .gameover-title--victory,
+  .gameover-title--defeat {
+    font-size: 2.8rem;
+  }
+
+  .gameover-stat {
+    font-size: 0.95rem;
+  }
+}
+
+@media (max-width: 420px) {
+  .gameover-title--victory,
+  .gameover-title--defeat {
+    font-size: 2.2rem;
+  }
+
+  .gameover-stats {
+    gap: 0.3rem;
+  }
+
+  .gameover-stat {
+    font-size: 0.85rem;
+    padding: 0.3rem 0.6rem;
+  }
+}
+
 /* Reduced-motion: disable animations for users who prefer it */
 @media (prefers-reduced-motion: reduce) {
   .missile-arc,
@@ -1093,6 +1276,30 @@ body {
 
   .btn {
     transition: none;
+  }
+
+  .gameover-overlay {
+    transition: none;
+  }
+
+  .gameover-overlay--defeat {
+    animation: none;
+  }
+
+  .gameover-title--victory {
+    animation: none;
+    transform: scale(1);
+    opacity: 1;
+  }
+
+  .gameover-title--defeat {
+    animation: none;
+    transform: translateX(0);
+    opacity: 1;
+  }
+
+  .confetti-particle {
+    display: none !important;
   }
 
   @keyframes explode {
