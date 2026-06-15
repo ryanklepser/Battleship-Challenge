@@ -1,5 +1,5 @@
 {
-  "name": "battlefield-challenge",
+  "name": "battleship-challenge",
   "private": true,
   "version": "0.1.0",
   "description": "A web-based Battleship game with AI opponents — Easy, Medium, and Expert difficulty levels",
