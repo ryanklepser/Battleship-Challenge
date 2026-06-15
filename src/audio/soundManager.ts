@@ -227,55 +227,92 @@ export function playVictory(): void {
   playNote(784.0, 0.6, 'triangle', 0.05, t + 0.6, 0);
 }
 
+// "He's a Pirate" melody (Pirates of the Caribbean) — synthesized
+// Notes: [frequency_hz, duration_beats]
+const PIRATE_MELODY: [number, number][] = [
+  // Phrase 1: Am
+  [220.0, 0.5], [329.6, 0.5], [440.0, 0.5], [329.6, 0.25], [440.0, 0.75],
+  [329.6, 0.5], [440.0, 0.5], [523.3, 0.5], [493.9, 0.25], [440.0, 0.75],
+  [329.6, 0.5], [440.0, 0.5], [329.6, 0.5], [293.7, 0.25], [329.6, 0.75],
+  [220.0, 0.5], [293.7, 0.5], [220.0, 1.0],
+  // Phrase 2: Dm → Am
+  [220.0, 0.5], [329.6, 0.5], [440.0, 0.5], [329.6, 0.25], [440.0, 0.75],
+  [329.6, 0.5], [440.0, 0.5], [587.3, 0.5], [523.3, 0.25], [440.0, 0.75],
+  [329.6, 0.5], [440.0, 0.5], [329.6, 0.5], [293.7, 0.25], [329.6, 0.75],
+  [220.0, 0.5], [293.7, 0.5], [220.0, 1.0],
+];
+
+const BEAT_DURATION = 0.22; // seconds per beat — sets tempo
+
+function playMelodyLoop(ac: AudioContext, startTime: number): { stop: () => void } {
+  let stopped = false;
+  let timeoutId: ReturnType<typeof setTimeout> | null = null;
+
+  function scheduleLoop(offset: number): void {
+    if (stopped || muted) return;
+    let t = offset;
+    for (const [freq, beats] of PIRATE_MELODY) {
+      if (stopped) return;
+      const dur = beats * BEAT_DURATION;
+      const osc = ac.createOscillator();
+      const gain = ac.createGain();
+      osc.type = 'square';
+      osc.frequency.value = freq;
+      gain.gain.setValueAtTime(0.06, t);
+      gain.gain.setValueAtTime(0.06, t + dur * 0.7);
+      gain.gain.linearRampToValueAtTime(0, t + dur * 0.95);
+      osc.connect(gain);
+      gain.connect(ac.destination);
+      osc.start(t);
+      osc.stop(t + dur);
+
+      // Harmony layer — fifth above, quieter
+      const osc2 = ac.createOscillator();
+      const gain2 = ac.createGain();
+      osc2.type = 'triangle';
+      osc2.frequency.value = freq * 1.5;
+      gain2.gain.setValueAtTime(0.02, t);
+      gain2.gain.linearRampToValueAtTime(0, t + dur * 0.9);
+      osc2.connect(gain2);
+      gain2.connect(ac.destination);
+      osc2.start(t);
+      osc2.stop(t + dur);
+
+      t += dur;
+    }
+
+    const loopDuration = (t - offset) * 1000;
+    timeoutId = setTimeout(() => {
+      if (!stopped && !muted) {
+        scheduleLoop(ac.currentTime + 0.3);
+      }
+    }, loopDuration);
+  }
+
+  scheduleLoop(startTime);
+  return {
+    stop: () => {
+      stopped = true;
+      if (timeoutId !== null) clearTimeout(timeoutId);
+    },
+  };
+}
+
 export function startAmbient(): void {
   if (muted || ambientNode) return;
   ambientEnabled = true;
   const ac = ctx();
 
-  // Low ocean rumble via filtered noise
-  const bufferSize = ac.sampleRate * 4;
-  const buffer = ac.createBuffer(1, bufferSize, ac.sampleRate);
-  const data = buffer.getChannelData(0);
-  for (let i = 0; i < bufferSize; i++) {
-    data[i] = Math.random() * 2 - 1;
-  }
-  const src = ac.createBufferSource();
-  src.buffer = buffer;
-  src.loop = true;
+  const masterGain = ac.createGain();
+  masterGain.gain.value = 1.0;
+  masterGain.connect(ac.destination);
 
-  const lp = ac.createBiquadFilter();
-  lp.type = 'lowpass';
-  lp.frequency.value = 200;
-
-  const gain = ac.createGain();
-  gain.gain.value = 0.04;
-
-  src.connect(lp);
-  lp.connect(gain);
-  gain.connect(ac.destination);
-  src.start();
-
-  // Sonar pings
-  const pingInterval = setInterval(() => {
-    if (muted) return;
-    const pt = ac.currentTime;
-    const osc = ac.createOscillator();
-    const g = ac.createGain();
-    osc.type = 'sine';
-    osc.frequency.value = 1200;
-    g.gain.setValueAtTime(0.03, pt);
-    g.gain.linearRampToValueAtTime(0, pt + 0.8);
-    osc.connect(g);
-    g.connect(ac.destination);
-    osc.start(pt);
-    osc.stop(pt + 0.8);
-  }, 5000);
+  const melodyHandle = playMelodyLoop(ac, ac.currentTime + 0.1);
 
   ambientNode = {
-    gain,
+    gain: masterGain,
     stop: () => {
-      clearInterval(pingInterval);
-      try { src.stop(); } catch { /* already stopped */ }
+      melodyHandle.stop();
     },
   };
 }
