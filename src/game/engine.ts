@@ -45,6 +45,7 @@ export function createGameState(difficulty: Difficulty): GameState {
       playerHits: 0,
       gameStartTime: null,
     },
+    turnNumber: 0,
   };
 }
 
@@ -181,6 +182,7 @@ export async function aiAttack(
     state.winner = 'ai';
   } else {
     state.isPlayerTurn = true;
+    state.turnNumber++;
   }
 
   onComplete({

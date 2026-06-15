@@ -202,7 +202,7 @@ function renderGame(state: GameState): void {
       () => {
         const coord = formatCoordinate(result.target);
         if (result.result === 'sunk') {
-          showResultPopup('sunk', result.sunkShipName);
+          showResultPopup('sunk', result.sunkShipName, 'ai');
         } else {
           showResultPopup(result.result);
         }
@@ -239,7 +239,7 @@ function renderGame(state: GameState): void {
         () => {
           const coord = formatCoordinate(result.target);
           if (result.result === 'sunk') {
-            showResultPopup('sunk', result.sunkShipName);
+            showResultPopup('sunk', result.sunkShipName, 'player');
           } else {
             showResultPopup(result.result);
           }

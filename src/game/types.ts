@@ -56,6 +56,7 @@ export interface GameState {
   winner: 'player' | 'ai' | null;
   placement: PlacementState | null;
   stats: GameStats;
+  turnNumber: number;
 }
 
 export const BOARD_SIZE = 10;
