@@ -1078,10 +1078,9 @@ body {
 /* Result Popup */
 .result-popup {
   font-family: var(--font-display);
-  position: fixed;
-  bottom: 5%;
+  position: relative;
   left: 50%;
-  transform: translate(-50%, 20px) scale(0.5);
+  transform: translateX(-50%) scale(0.5);
   font-size: 3rem;
   font-weight: 900;
   letter-spacing: 0.1em;
@@ -1089,17 +1088,19 @@ body {
   z-index: 200;
   pointer-events: none;
   opacity: 0;
+  text-align: center;
+  margin: 0.5rem 0;
   transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1), opacity 0.3s;
   text-shadow: 0 0 20px rgba(0, 0, 0, 0.5), 0 4px 8px rgba(0, 0, 0, 0.3);
 }
 
 .result-popup--visible {
-  transform: translate(-50%, 0) scale(1);
+  transform: translateX(-50%) scale(1);
   opacity: 1;
 }
 
 .result-popup--fade {
-  transform: translate(-50%, -10px) scale(1.1);
+  transform: translateX(-50%) translateY(-10px) scale(1.1);
   opacity: 0;
 }
 
@@ -1851,11 +1852,11 @@ body {
   }
 
   .result-popup--visible {
-    transform: translate(-50%, -50%) scale(1);
+    transform: translateX(-50%) scale(1);
   }
 
   .result-popup--fade {
-    transform: translate(-50%, -50%) scale(1);
+    transform: translateX(-50%) scale(1);
   }
 
   .mascot--idle,
