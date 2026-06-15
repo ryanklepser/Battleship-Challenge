@@ -11,6 +11,9 @@ import {
   shakeBoard,
   updatePreview,
   renderFleetRoster,
+  renderShareButton,
+  savePersonalBest,
+  computeAccuracy,
 } from './ui/renderer';
 import {
   createGameState,
@@ -308,10 +311,15 @@ function renderGame(state: GameState): void {
       overlay.classList.add('gameover-overlay--victory');
       spawnConfetti(overlay);
 
+      const accuracy = computeAccuracy(state.stats.playerShotsFired);
+      const isNewBest = savePersonalBest(state.difficulty, accuracy);
+
       overlay.innerHTML = `
         <div class="gameover-content">
           <h2 class="gameover-title gameover-title--victory">VICTORY</h2>
+          ${isNewBest ? `<div class="new-best-banner">New Personal Best: ${accuracy}% accuracy!</div>` : ''}
           ${getStatsHTML(state.stats)}
+          <div id="share-buttons"></div>
           <div class="gameover-actions">
             <button class="btn btn--play-again" data-action="play-again">Play Again</button>
             <button class="btn btn--expert" data-action="harder">Increase Difficulty</button>
@@ -334,6 +342,13 @@ function renderGame(state: GameState): void {
     }
 
     container.appendChild(overlay);
+
+    if (state.winner === 'player') {
+      const shareContainer = overlay.querySelector<HTMLDivElement>('#share-buttons');
+      if (shareContainer) {
+        renderShareButton(shareContainer, state.stats.playerShotsFired, state.difficulty);
+      }
+    }
 
     requestAnimationFrame(() => {
       overlay.classList.add('gameover-overlay--visible');
