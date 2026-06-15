@@ -113,7 +113,11 @@ body {
 }
 
 .status--hidden {
-  display: none;
+  display: none !important;
+}
+
+.status:empty {
+  display: none !important;
 }
 
 .status--gameover {
