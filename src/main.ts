@@ -529,7 +529,7 @@ function renderGame(state: GameState): void {
     if (!result) return;
 
     animating = true;
-    mascotShoutFire();
+    mascotShoutFire('player');
     playMissileLaunch();
     flashCrosshair(aiBoardEl, row, col).then(() => {
       clearCrosshair(aiBoardEl);
@@ -588,7 +588,7 @@ function renderGame(state: GameState): void {
     update();
 
     aiAttack(state, (result) => {
-      mascotShoutFire();
+      mascotShoutFire('ai');
       playMissileLaunch();
       showAttackAnimation(
         aiBoardEl,
