@@ -163,7 +163,7 @@ function showMenu(): void {
     app.innerHTML = `
       <div class="phase-content">
         <header class="header" role="banner">
-          <h1>⚓ Battlefield</h1>
+          <h1>⚓ Battleship</h1>
           <p>Sink Devin's fleet before Devin sinks yours!</p>
         </header>
         <main id="game-root" role="main"></main>
@@ -201,7 +201,7 @@ function renderGame(state: GameState): void {
   app.innerHTML = `
     <div class="phase-content">
       <header class="header" role="banner">
-        <h1>⚓ Battlefield</h1>
+        <h1>⚓ Battleship</h1>
       </header>
       <main role="main">
         <div id="board-tabs-container"></div>

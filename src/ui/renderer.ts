@@ -338,17 +338,7 @@ export function renderStatus(state: GameState, container: HTMLElement): void {
       container.textContent = `Place your ${ship.name} (${ship.size} cells) — ${state.placement.orientation}`;
     }
   } else {
-    if (state.isPlayerTurn) {
-      const playerPrompts = [
-        'Fire at will, Captain',
-        'Choose your target',
-        'Awaiting your orders',
-      ];
-      const prompt = playerPrompts[state.turnNumber % playerPrompts.length];
-      container.textContent = `Turn ${state.stats.playerShotsFired + 1} — ${prompt}`;
-    } else {
-      container.textContent = `Turn ${state.stats.playerShotsFired} — Devin is plotting\u2026`;
-    }
+    container.textContent = '';
   }
 }
 
