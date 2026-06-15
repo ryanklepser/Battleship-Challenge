@@ -1137,22 +1137,22 @@ body {
 
 /* Mascot — pixel art 90's arcade style */
 .mascot-container {
-  position: fixed;
-  top: 10px;
   width: 64px;
+  min-width: 64px;
   height: 80px;
-  z-index: 50;
   pointer-events: none;
   image-rendering: pixelated;
+  align-self: center;
+  flex-shrink: 0;
 }
 
 .mascot-container--left {
-  left: 10px;
+  /* sits to the left of boards inside .game-layout */
 }
 
 .mascot-container--right {
-  right: 10px;
   transform: scaleX(-1);
+  /* sits to the right of boards inside .game-layout */
 }
 
 .mascot-svg {

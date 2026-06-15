@@ -82,11 +82,22 @@ export function mountMascot(parent: HTMLElement): void {
     rightMascot = createMascotElement('right');
   }
 
-  if (!leftMascot.parentElement) {
-    parent.appendChild(leftMascot);
-  }
-  if (!rightMascot.parentElement) {
-    parent.appendChild(rightMascot);
+  const gameLayout = parent.querySelector('.game-layout');
+  const boards = parent.querySelector('.boards');
+  if (gameLayout && boards) {
+    if (!leftMascot.parentElement) {
+      gameLayout.insertBefore(leftMascot, boards);
+    }
+    if (!rightMascot.parentElement) {
+      boards.insertAdjacentElement('afterend', rightMascot);
+    }
+  } else {
+    if (!leftMascot.parentElement) {
+      parent.appendChild(leftMascot);
+    }
+    if (!rightMascot.parentElement) {
+      parent.appendChild(rightMascot);
+    }
   }
 }
 
