@@ -1,5 +1,5 @@
 import './style.css';
-import type { GameState, Difficulty } from './game/types';
+import type { GameState, Difficulty, GameStats } from './game/types';
 import { BOARD_SIZE } from './game/types';
 import {
   renderBoard,
@@ -245,13 +245,94 @@ function renderGame(state: GameState): void {
     });
   }
 
+  function formatTime(ms: number): string {
+    const totalSeconds = Math.floor(ms / 1000);
+    const minutes = Math.floor(totalSeconds / 60);
+    const seconds = totalSeconds % 60;
+    return `${minutes}:${seconds.toString().padStart(2, '0')}`;
+  }
+
+  function getStatsHTML(stats: GameStats): string {
+    const accuracy = stats.playerShotsFired > 0
+      ? Math.round((stats.playerHits / stats.playerShotsFired) * 100)
+      : 0;
+    const elapsed = stats.gameStartTime
+      ? formatTime(Date.now() - stats.gameStartTime)
+      : '0:00';
+    return `<div class="gameover-stats">
+      <span class="gameover-stat">Shots: ${stats.playerShotsFired}</span>
+      <span class="gameover-stat-divider">|</span>
+      <span class="gameover-stat">Accuracy: ${accuracy}%</span>
+      <span class="gameover-stat-divider">|</span>
+      <span class="gameover-stat">Time: ${elapsed}</span>
+    </div>`;
+  }
+
+  function spawnConfetti(overlay: HTMLElement): void {
+    const colors = ['#f39c12', '#e74c3c', '#2ecc71', '#3498db', '#9b59b6', '#1abc9c'];
+    for (let i = 0; i < 80; i++) {
+      const particle = document.createElement('div');
+      particle.classList.add('confetti-particle');
+      particle.style.left = `${Math.random() * 100}%`;
+      particle.style.backgroundColor = colors[Math.floor(Math.random() * colors.length)];
+      particle.style.animationDelay = `${Math.random() * 2}s`;
+      particle.style.animationDuration = `${2 + Math.random() * 2}s`;
+      particle.style.width = `${6 + Math.random() * 8}px`;
+      particle.style.height = `${6 + Math.random() * 8}px`;
+      overlay.appendChild(particle);
+    }
+  }
+
   function renderGameOver(container: HTMLElement): void {
     container.innerHTML = '';
-    const btn = document.createElement('button');
-    btn.textContent = 'Play Again';
-    btn.classList.add('btn', 'btn--play-again');
-    btn.addEventListener('click', showMenu);
-    container.appendChild(btn);
+
+    const overlay = document.createElement('div');
+    overlay.classList.add('gameover-overlay');
+
+    if (state.winner === 'player') {
+      overlay.classList.add('gameover-overlay--victory');
+      spawnConfetti(overlay);
+
+      overlay.innerHTML = `
+        <div class="gameover-content">
+          <h2 class="gameover-title gameover-title--victory">VICTORY</h2>
+          ${getStatsHTML(state.stats)}
+          <div class="gameover-actions">
+            <button class="btn btn--play-again" data-action="play-again">Play Again</button>
+            <button class="btn btn--expert" data-action="harder">Increase Difficulty</button>
+          </div>
+        </div>
+      `;
+    } else {
+      overlay.classList.add('gameover-overlay--defeat');
+
+      overlay.innerHTML = `
+        <div class="gameover-content">
+          <h2 class="gameover-title gameover-title--defeat">DEFEATED</h2>
+          ${getStatsHTML(state.stats)}
+          <div class="gameover-actions">
+            <button class="btn btn--play-again" data-action="play-again">Try Again</button>
+            <button class="btn btn--easy" data-action="easier">Lower Difficulty?</button>
+          </div>
+        </div>
+      `;
+    }
+
+    container.appendChild(overlay);
+
+    requestAnimationFrame(() => {
+      overlay.classList.add('gameover-overlay--visible');
+    });
+
+    overlay.querySelector('[data-action="play-again"]')?.addEventListener('click', showMenu);
+    overlay.querySelector('[data-action="harder"]')?.addEventListener('click', () => {
+      const next: Difficulty = state.difficulty === 'easy' ? 'medium' : 'expert';
+      startGame(next);
+    });
+    overlay.querySelector('[data-action="easier"]')?.addEventListener('click', () => {
+      const next: Difficulty = state.difficulty === 'expert' ? 'medium' : 'easy';
+      startGame(next);
+    });
   }
 
   function handleGridKeydown(e: KeyboardEvent, boardEl: HTMLElement, clickHandler?: (row: number, col: number) => void): void {

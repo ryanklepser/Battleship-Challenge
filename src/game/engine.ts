@@ -39,6 +39,12 @@ export function createGameState(difficulty: Difficulty): GameState {
       currentShipIndex: 0,
       orientation: 'horizontal',
     },
+    stats: {
+      playerShotsFired: 0,
+      aiShotsFired: 0,
+      playerHits: 0,
+      gameStartTime: null,
+    },
   };
 }
 
@@ -68,6 +74,7 @@ export function placeCurrentShip(
   if (state.placement.currentShipIndex >= state.playerShips.length) {
     state.phase = 'battle';
     state.placement = null;
+    state.stats.gameStartTime = Date.now();
   }
 
   return true;
@@ -117,6 +124,10 @@ export function playerAttack(
   if (cell.state === 'hit' || cell.state === 'miss') return null;
 
   const result = attack(state.aiBoard, state.aiShips, target);
+  state.stats.playerShotsFired++;
+  if (result === 'hit' || result === 'sunk') {
+    state.stats.playerHits++;
+  }
 
   let sunkShipName: string | undefined;
   if (result === 'sunk') {
@@ -154,6 +165,7 @@ export async function aiAttack(
   const target = getAIMove(state.playerBoard, state.difficulty);
   const cell = state.playerBoard[target.row][target.col];
   const result = attack(state.playerBoard, state.playerShips, target);
+  state.stats.aiShotsFired++;
 
   let sunkShipName: string | undefined;
   if (result === 'sunk') {
