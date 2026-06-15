@@ -9,6 +9,8 @@
   --color-accent: #f39c12;
   --color-sunk: #c0392b;
   --color-glow: rgba(96, 165, 250, 0.12);
+  --font-display: 'Rajdhani', sans-serif;
+  --font-body: 'Inter', sans-serif;
 }
 
 * {
@@ -18,7 +20,7 @@
 }
 
 body {
-  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  font-family: var(--font-body);
   background: radial-gradient(ellipse at 50% 30%, #111d36 0%, var(--color-ocean) 70%);
   color: var(--color-text);
   min-height: 100vh;
@@ -40,7 +42,17 @@ body {
 }
 
 .header h1 {
-  font-size: 2.2rem;
+  font-family: var(--font-display);
+  font-size: 3.2rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  background: linear-gradient(135deg, var(--color-text) 0%, var(--color-accent) 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  text-shadow: none;
+  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.4));
   margin-bottom: 0.25rem;
 }
 
@@ -51,6 +63,7 @@ body {
 
 /* Status */
 .status {
+  font-family: var(--font-display);
   text-align: center;
   font-size: 1.2rem;
   font-weight: 600;
@@ -64,6 +77,7 @@ body {
 }
 
 .status--gameover {
+  font-family: var(--font-display);
   font-size: 1.8rem;
   font-weight: 700;
   background: linear-gradient(135deg, var(--color-ocean-light), #2c3e50);
@@ -86,7 +100,8 @@ body {
 }
 
 .board-title {
-  font-size: 1rem;
+  font-family: var(--font-display);
+  font-size: 1.05rem;
   font-weight: 600;
   margin-bottom: 0.5rem;
   color: var(--color-accent);
@@ -407,12 +422,14 @@ body {
 }
 
 .difficulty-selector h2 {
+  font-family: var(--font-display);
   margin-bottom: 2rem;
   font-size: 1.6rem;
 }
 
 /* Buttons */
 .btn {
+  font-family: var(--font-display);
   display: inline-block;
   padding: 0.75rem 2rem;
   margin: 0.5rem;
@@ -571,6 +588,7 @@ body {
 
 /* Result Popup */
 .result-popup {
+  font-family: var(--font-display);
   position: fixed;
   top: 50%;
   left: 50%;
@@ -738,7 +756,7 @@ body {
   }
 
   .header h1 {
-    font-size: 1.6rem;
+    font-size: 2rem;
   }
 
   .board th,
