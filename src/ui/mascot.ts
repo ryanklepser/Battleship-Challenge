@@ -143,9 +143,12 @@ export function setMascotMood(mood: MascotMood, message?: string): void {
   if (rightMascot) setMoodOnElement(rightMascot, mood, message);
 }
 
-export function mascotShoutFire(): void {
-  if (leftMascot) setMoodOnElement(leftMascot, 'celebrate', 'Fire!');
-  if (rightMascot) setMoodOnElement(rightMascot, 'celebrate', 'Fire!');
+export function mascotShoutFire(side: 'player' | 'ai' = 'player'): void {
+  if (side === 'player') {
+    if (leftMascot) setMoodOnElement(leftMascot, 'celebrate', 'Fire!');
+  } else {
+    if (rightMascot) setMoodOnElement(rightMascot, 'celebrate', 'Fire!');
+  }
   setTimeout(() => {
     if (currentMood === 'watching' || currentMood === 'celebrate') {
       if (leftMascot) setMoodOnElement(leftMascot, 'watching');
@@ -156,7 +159,7 @@ export function mascotShoutFire(): void {
 
 export function updateMascotForPhase(phase: GamePhase, winner: 'player' | 'ai' | null): void {
   if (phase === 'battle') {
-    setMascotMood('watching', 'Engage!');
+    setMascotMood('watching');
   } else if (phase === 'gameover') {
     if (winner === 'player') {
       setMascotMood('defeat', 'You got me...');
