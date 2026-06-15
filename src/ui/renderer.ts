@@ -161,6 +161,17 @@ export function renderDifficultySelector(
   const wrapper = document.createElement('div');
   wrapper.classList.add('difficulty-selector');
 
+  // Radar hero illustration
+  const radar = document.createElement('div');
+  radar.classList.add('radar-hero');
+  radar.innerHTML = `
+    <div class="radar-crosshair"></div>
+    <div class="radar-blip"></div>
+    <div class="radar-blip"></div>
+    <div class="radar-blip"></div>
+  `;
+  wrapper.appendChild(radar);
+
   const label = document.createElement('h2');
   label.textContent = 'Select Difficulty';
   wrapper.appendChild(label);
@@ -168,18 +179,29 @@ export function renderDifficultySelector(
   const difficulties: Array<{
     value: 'easy' | 'medium' | 'expert';
     label: string;
+    tooltip: string;
   }> = [
-    { value: 'easy', label: '🟢 Easy' },
-    { value: 'medium', label: '🟡 Medium' },
-    { value: 'expert', label: '🔴 Expert' },
+    { value: 'easy', label: '🟢 Easy', tooltip: 'Random shots — good for learning' },
+    { value: 'medium', label: '🟡 Medium', tooltip: 'Hunts adjacent cells — a real fight' },
+    { value: 'expert', label: '🔴 Expert', tooltip: 'Parity strategy — plays to win' },
   ];
 
   for (const diff of difficulties) {
+    const btnWrapper = document.createElement('div');
+    btnWrapper.classList.add('btn-wrapper');
+
     const btn = document.createElement('button');
     btn.textContent = diff.label;
     btn.classList.add('btn', `btn--${diff.value}`);
     btn.addEventListener('click', () => onSelect(diff.value));
-    wrapper.appendChild(btn);
+
+    const tooltip = document.createElement('span');
+    tooltip.classList.add('btn-tooltip');
+    tooltip.textContent = diff.tooltip;
+
+    btnWrapper.appendChild(tooltip);
+    btnWrapper.appendChild(btn);
+    wrapper.appendChild(btnWrapper);
   }
 
   container.appendChild(wrapper);
