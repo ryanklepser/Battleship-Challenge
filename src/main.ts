@@ -8,6 +8,7 @@ import {
   renderPlacementControls,
   showAttackAnimation,
   showResultPopup,
+  shakeBoard,
   updatePreview,
   renderFleetRoster,
 } from './ui/renderer';
@@ -104,6 +105,7 @@ function renderGame(state: GameState): void {
   updateMascotForPhase(state.phase, state.winner);
 
   let animating = false;
+  let battleJustStarted = false;
 
   function update(): void {
     renderStatus(state, statusEl);
@@ -120,12 +122,15 @@ function renderGame(state: GameState): void {
         handleRotate,
       );
     } else if (state.phase === 'battle') {
-      renderBoard(state.playerBoard, playerBoardEl, false, undefined, state.playerShips);
+      const reveal = battleJustStarted;
+      battleJustStarted = false;
+
+      renderBoard(state.playerBoard, playerBoardEl, false, undefined, state.playerShips, reveal);
 
       if (!animating) {
-        renderBoard(state.aiBoard, aiBoardEl, true, handlePlayerClick);
+        renderBoard(state.aiBoard, aiBoardEl, true, handlePlayerClick, undefined, reveal);
       } else {
-        renderBoard(state.aiBoard, aiBoardEl, true);
+        renderBoard(state.aiBoard, aiBoardEl, true, undefined, undefined, reveal);
       }
 
       actionsEl.innerHTML = '';
@@ -166,6 +171,9 @@ function renderGame(state: GameState): void {
   function handlePlacementClick(row: number, col: number): void {
     const placed = placeCurrentShip(state, { row, col });
     if (placed) {
+      if (state.phase === 'battle') {
+        battleJustStarted = true;
+      }
       update();
     }
   }
@@ -240,6 +248,7 @@ function renderGame(state: GameState): void {
             mascotReactToMiss(false);
           } else {
             mascotReactToHit(false);
+            shakeBoard(playerBoardEl);
           }
 
           animating = false;
