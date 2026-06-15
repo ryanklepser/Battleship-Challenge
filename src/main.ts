@@ -42,6 +42,7 @@ import {
   updateMascotForPhase,
   mascotReactToHit,
   mascotReactToMiss,
+  mascotShoutFire,
 } from './ui/mascot';
 import {
   unlock as unlockAudio,
@@ -217,10 +218,10 @@ function renderGame(state: GameState): void {
               <div id="ai-board"></div>
             </section>
           </div>
+          <div id="game-actions" class="game-actions" role="toolbar" aria-label="Game actions"></div>
         </div>
         <div id="status" class="status" role="status" aria-live="polite"></div>
         <div id="fire-btn-container"></div>
-        <div id="game-actions" class="game-actions" role="toolbar" aria-label="Game actions"></div>
       </main>
     </div>
   `;
@@ -528,6 +529,7 @@ function renderGame(state: GameState): void {
     if (!result) return;
 
     animating = true;
+    mascotShoutFire();
     playMissileLaunch();
     flashCrosshair(aiBoardEl, row, col).then(() => {
       clearCrosshair(aiBoardEl);
@@ -586,6 +588,7 @@ function renderGame(state: GameState): void {
     update();
 
     aiAttack(state, (result) => {
+      mascotShoutFire();
       playMissileLaunch();
       showAttackAnimation(
         aiBoardEl,

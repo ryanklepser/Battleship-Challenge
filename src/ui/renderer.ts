@@ -76,8 +76,9 @@ function cellStateLabel(state: string, shipName: string | null, hideShips: boole
 }
 
 function getCellSize(): number {
-  if (window.innerWidth <= 768) return 32;
-  return 36;
+  if (window.innerWidth <= 420) return 26;
+  if (window.innerWidth <= 768) return 28;
+  return 30;
 }
 
 export function renderBoard(
@@ -574,7 +575,7 @@ export function showAttackAnimation(
 
   const trailHistory: Array<{ x: number; y: number }> = [];
 
-  const duration = 600;
+  const duration = 720;
   const startTime = performance.now();
   const peakHeight = 120;
 

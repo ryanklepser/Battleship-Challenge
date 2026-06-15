@@ -51,12 +51,12 @@ body {
 /* Header */
 .header {
   text-align: center;
-  margin-bottom: 1.5rem;
+  margin-bottom: 0.5rem;
 }
 
 .header h1 {
   font-family: var(--font-display);
-  font-size: 3.2rem;
+  font-size: 2.4rem;
   font-weight: 700;
   letter-spacing: 0.04em;
   text-transform: uppercase;
@@ -132,7 +132,8 @@ body {
   display: flex;
   gap: 1.5rem;
   justify-content: center;
-  margin-bottom: 1.5rem;
+  align-items: flex-start;
+  margin-bottom: 0.5rem;
 }
 
 /* Fleet Roster */
@@ -225,9 +226,9 @@ body {
 .boards {
   display: flex;
   justify-content: center;
-  gap: 2rem;
-  flex-wrap: wrap;
-  margin-bottom: 1.5rem;
+  gap: 1rem;
+  flex-wrap: nowrap;
+  margin-bottom: 0.5rem;
 }
 
 .board-wrapper {
@@ -253,8 +254,8 @@ body {
 }
 
 .board th {
-  width: 36px;
-  height: 36px;
+  width: 30px;
+  height: 30px;
   text-align: center;
   font-weight: 600;
   font-size: 0.8rem;
@@ -262,8 +263,8 @@ body {
 }
 
 .cell {
-  width: 36px;
-  height: 36px;
+  width: 30px;
+  height: 30px;
   text-align: center;
   vertical-align: middle;
   border: 1px solid rgba(255, 255, 255, 0.06);
@@ -376,7 +377,7 @@ body {
 
 .ship-shape--vertical {
   transform-origin: top left;
-  transform: rotate(90deg) translateY(-36px);
+  transform: rotate(90deg) translateY(-30px);
 }
 
 .ship-svg {
@@ -562,9 +563,9 @@ body {
 /* Placement Action Buttons */
 .placement-actions {
   display: flex;
+  flex-direction: column;
   gap: 0.5rem;
-  justify-content: center;
-  flex-wrap: wrap;
+  align-items: stretch;
   margin-bottom: 0.5rem;
 }
 
@@ -603,8 +604,14 @@ body {
 
 /* Game Actions */
 .game-actions {
-  text-align: center;
-  padding: 1rem 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  align-items: center;
+  justify-content: flex-start;
+  padding: 0.5rem;
+  min-width: 140px;
+  align-self: center;
 }
 
 /* Landing Screen Ocean Background */
@@ -1131,14 +1138,21 @@ body {
 /* Mascot — pixel art 90's arcade style */
 .mascot-container {
   position: fixed;
-  top: 50%;
-  left: 50%;
+  top: 10px;
   width: 64px;
   height: 80px;
   z-index: 50;
   pointer-events: none;
-  transition: left 1.8s ease-in-out, top 1.8s ease-in-out, transform 0.3s ease;
   image-rendering: pixelated;
+}
+
+.mascot-container--left {
+  left: 10px;
+}
+
+.mascot-container--right {
+  right: 10px;
+  transform: scaleX(-1);
 }
 
 .mascot-svg {
@@ -1572,13 +1586,13 @@ body {
 
   .board th,
   .cell {
-    width: 32px;
-    height: 32px;
-    font-size: 0.8rem;
+    width: 28px;
+    height: 28px;
+    font-size: 0.75rem;
   }
 
   .board th {
-    font-size: 0.7rem;
+    font-size: 0.65rem;
   }
 
   .result-popup {
@@ -1590,12 +1604,12 @@ body {
   }
 
   .ship-shape--horizontal {
-    transform: scale(0.889);
+    transform: scale(0.933);
     transform-origin: top left;
   }
 
   .ship-shape--vertical {
-    transform: rotate(90deg) translateY(-32px) scale(0.889);
+    transform: rotate(90deg) translateY(-28px) scale(0.933);
     transform-origin: top left;
   }
 
@@ -1612,6 +1626,15 @@ body {
     width: 48px;
     height: 60px;
   }
+
+  .game-actions {
+    flex-direction: row;
+    flex-wrap: wrap;
+    justify-content: center;
+    min-width: 0;
+    width: 100%;
+    order: 2;
+  }
 }
 
 @media (max-width: 420px) {
@@ -1621,14 +1644,14 @@ body {
 
   .board th,
   .cell {
-    width: 32px;
-    height: 32px;
-    font-size: 0.7rem;
+    width: 26px;
+    height: 26px;
+    font-size: 0.65rem;
   }
 
   .btn {
-    padding: 0.6rem 1.2rem;
-    font-size: 0.95rem;
+    padding: 0.5rem 1rem;
+    font-size: 0.85rem;
   }
 
   .result-popup {
@@ -1640,12 +1663,12 @@ body {
   }
 
   .ship-shape--horizontal {
-    transform: scale(0.889);
+    transform: scale(0.867);
     transform-origin: top left;
   }
 
   .ship-shape--vertical {
-    transform: rotate(90deg) translateY(-32px) scale(0.889);
+    transform: rotate(90deg) translateY(-26px) scale(0.867);
     transform-origin: top left;
   }
 
