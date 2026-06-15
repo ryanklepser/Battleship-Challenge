@@ -6,6 +6,7 @@ import {
   renderStatus,
   renderDifficultySelector,
   renderPlacementControls,
+  renderMuteButton,
   showAttackAnimation,
   showResultPopup,
   shakeBoard,
@@ -37,6 +38,20 @@ import {
   mascotReactToHit,
   mascotReactToMiss,
 } from './ui/mascot';
+import {
+  unlock as unlockAudio,
+  isUnlocked as isAudioUnlocked,
+  toggleMute,
+  isMuted,
+  playMissileLaunch,
+  playHit,
+  playMiss,
+  playShipSunk,
+  playVictory,
+  startAmbient,
+  toggleAmbient,
+  isAmbientEnabled,
+} from './audio/soundManager';
 
 const app = document.querySelector<HTMLDivElement>('#app')!;
 let gameAbort: AbortController | null = null;
@@ -96,6 +111,36 @@ function showInterstitial(): Promise<void> {
   });
 }
 
+function handleFirstInteraction(): void {
+  if (!isAudioUnlocked()) {
+    unlockAudio();
+    startAmbient();
+    renderMuteButton(
+      document.querySelector<HTMLElement>('.header')!,
+      isMuted(),
+      isAmbientEnabled(),
+      handleMuteToggle,
+      handleAmbientToggle,
+    );
+  }
+}
+
+function handleMuteToggle(): void {
+  const nowMuted = toggleMute();
+  const header = document.querySelector<HTMLElement>('.header');
+  if (header) {
+    renderMuteButton(header, nowMuted, isAmbientEnabled(), handleMuteToggle, handleAmbientToggle);
+  }
+}
+
+function handleAmbientToggle(): void {
+  const nowAmbient = toggleAmbient();
+  const header = document.querySelector<HTMLElement>('.header');
+  if (header) {
+    renderMuteButton(header, isMuted(), nowAmbient, handleMuteToggle, handleAmbientToggle);
+  }
+}
+
 function showMenu(): void {
   removeMascot();
   removeLandingBg();
@@ -119,6 +164,16 @@ function showMenu(): void {
         <main id="game-root" role="main"></main>
       </div>
     `;
+
+    if (isAudioUnlocked()) {
+      renderMuteButton(
+        document.querySelector<HTMLElement>('.header')!,
+        isMuted(),
+        isAmbientEnabled(),
+        handleMuteToggle,
+        handleAmbientToggle,
+      );
+    }
 
     const gameRoot = document.querySelector<HTMLDivElement>('#game-root')!;
     renderDifficultySelector(gameRoot, startGame);
@@ -162,6 +217,16 @@ function renderGame(state: GameState): void {
       </main>
     </div>
   `;
+
+  if (isAudioUnlocked()) {
+    renderMuteButton(
+      document.querySelector<HTMLElement>('.header')!,
+      isMuted(),
+      isAmbientEnabled(),
+      handleMuteToggle,
+      handleAmbientToggle,
+    );
+  }
 
   const statusEl = document.querySelector<HTMLDivElement>('#status')!;
   const playerBoardEl = document.querySelector<HTMLDivElement>('#player-board')!;
@@ -259,6 +324,7 @@ function renderGame(state: GameState): void {
   }, { signal });
 
   function handlePlacementClick(row: number, col: number): void {
+    handleFirstInteraction();
     const preview = getPlacementPreview(state, { row, col });
     const wasPlacement = state.phase === 'placement';
     const placed = placeCurrentShip(state, { row, col });
@@ -299,11 +365,13 @@ function renderGame(state: GameState): void {
 
   function handlePlayerClick(row: number, col: number): void {
     if (animating) return;
+    handleFirstInteraction();
 
     const result = playerAttack(state, { row, col });
     if (!result) return;
 
     animating = true;
+    playMissileLaunch();
     flashCrosshair(aiBoardEl, row, col).then(() => {
       clearCrosshair(aiBoardEl);
     });
@@ -318,8 +386,13 @@ function renderGame(state: GameState): void {
       () => {
         const coord = formatCoordinate(result.target);
         if (result.result === 'sunk') {
+          playShipSunk();
           showResultPopup('sunk', result.sunkShipName, 'ai');
+        } else if (result.result === 'hit') {
+          playHit();
+          showResultPopup(result.result);
         } else {
+          playMiss();
           showResultPopup(result.result);
         }
 
@@ -327,6 +400,10 @@ function renderGame(state: GameState): void {
           mascotReactToMiss(true);
         } else {
           mascotReactToHit(true);
+        }
+
+        if (result.gameOver && state.winner === 'player') {
+          playVictory();
         }
 
         animating = false;
@@ -346,6 +423,7 @@ function renderGame(state: GameState): void {
     update();
 
     aiAttack(state, (result) => {
+      playMissileLaunch();
       showAttackAnimation(
         aiBoardEl,
         playerBoardEl,
@@ -355,8 +433,13 @@ function renderGame(state: GameState): void {
         () => {
           const coord = formatCoordinate(result.target);
           if (result.result === 'sunk') {
+            playShipSunk();
             showResultPopup('sunk', result.sunkShipName, 'player');
+          } else if (result.result === 'hit') {
+            playHit();
+            showResultPopup(result.result);
           } else {
+            playMiss();
             showResultPopup(result.result);
           }
 
