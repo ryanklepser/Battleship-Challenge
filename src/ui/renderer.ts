@@ -414,6 +414,62 @@ export function showAttackAnimation(
   requestAnimationFrame(animate);
 }
 
+export function renderFleetRoster(state: GameState, container: HTMLElement): void {
+  container.innerHTML = '';
+
+  const playerSection = buildRosterSection('Your Fleet', state.playerShips);
+  const aiSection = buildRosterSection("Devin's Fleet", state.aiShips);
+
+  container.appendChild(playerSection);
+  container.appendChild(aiSection);
+}
+
+function buildRosterSection(title: string, ships: Ship[]): HTMLElement {
+  const section = document.createElement('div');
+  section.classList.add('roster-section');
+
+  const heading = document.createElement('h3');
+  heading.classList.add('roster-title');
+  heading.textContent = title;
+  section.appendChild(heading);
+
+  const list = document.createElement('ul');
+  list.classList.add('roster-list');
+
+  for (const def of SHIP_DEFINITIONS) {
+    const ship = ships.find((s) => s.name === def.name);
+    const isSunk = ship ? ship.hits.size >= ship.size : false;
+
+    const li = document.createElement('li');
+    li.classList.add('roster-item');
+    if (isSunk) li.classList.add('roster-item--sunk');
+
+    const iconSpan = document.createElement('span');
+    iconSpan.classList.add('roster-icon');
+    if (SHIP_SVGS[def.name]) {
+      iconSpan.innerHTML = `<svg viewBox="0 0 ${def.size} 1" class="roster-ship-svg">${SHIP_SVGS[def.name].replace(/<svg[^>]*>/, '').replace(/<\/svg>/, '')}</svg>`;
+    }
+    li.appendChild(iconSpan);
+
+    const nameSpan = document.createElement('span');
+    nameSpan.classList.add('roster-name');
+    nameSpan.textContent = `${def.name} (${def.size})`;
+    li.appendChild(nameSpan);
+
+    if (isSunk) {
+      const badge = document.createElement('span');
+      badge.classList.add('roster-sunk-badge');
+      badge.textContent = '✕';
+      li.appendChild(badge);
+    }
+
+    list.appendChild(li);
+  }
+
+  section.appendChild(list);
+  return section;
+}
+
 export function showResultPopup(
   result: 'hit' | 'miss' | 'sunk',
   shipName?: string,
