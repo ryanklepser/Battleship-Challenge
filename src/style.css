@@ -333,7 +333,7 @@ body {
 
 .cell--hit {
   background: var(--color-hit);
-  z-index: 2;
+  z-index: 4;
   /* Cross-hatch pattern as a non-color hit indicator */
   background-image:
     repeating-linear-gradient(
