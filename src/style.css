@@ -328,11 +328,12 @@ body {
 
 .cell--ship-origin {
   overflow: visible;
+  z-index: 3;
 }
 
 .cell--hit {
   background: var(--color-hit);
-  z-index: 2;
+  z-index: 4;
   /* Cross-hatch pattern as a non-color hit indicator */
   background-image:
     repeating-linear-gradient(
@@ -601,7 +602,7 @@ body {
 .board {
   box-shadow: 0 0 40px rgba(0, 0, 0, 0.3);
   border-radius: 4px;
-  overflow: hidden;
+  overflow: visible;
 }
 
 /* Game Actions */
