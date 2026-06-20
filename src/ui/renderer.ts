@@ -188,26 +188,28 @@ export function renderBoard(
             shipIcon.setAttribute('aria-hidden', 'true');
             shipIcon.textContent = '▪';
             td.appendChild(shipIcon);
-            if (ships && cell.shipName) {
-              const info = getShipCellIndex(ships, cell.shipName, row, col);
-              if (info && info.index === 0 && SHIP_SVGS[cell.shipName]) {
-                const wrapper = document.createElement('div');
-                wrapper.classList.add('ship-shape');
-                wrapper.setAttribute('aria-hidden', 'true');
-                wrapper.classList.add(
-                  info.orientation === 'vertical' ? 'ship-shape--vertical' : 'ship-shape--horizontal',
-                );
-                wrapper.style.width = `${info.total * cellSize}px`;
-                wrapper.style.height = `${cellSize}px`;
-                wrapper.innerHTML = SHIP_SVGS[cell.shipName];
-                td.appendChild(wrapper);
-                td.classList.add('cell--ship-origin');
-              }
-            }
           }
           break;
         case 'empty':
           break;
+      }
+
+      // Render ship shape on the first cell of each ship, regardless of hit state
+      if (!hideShips && cell.shipName && ships) {
+        const info = getShipCellIndex(ships, cell.shipName, row, col);
+        if (info && info.index === 0 && SHIP_SVGS[cell.shipName]) {
+          const wrapper = document.createElement('div');
+          wrapper.classList.add('ship-shape');
+          wrapper.setAttribute('aria-hidden', 'true');
+          wrapper.classList.add(
+            info.orientation === 'vertical' ? 'ship-shape--vertical' : 'ship-shape--horizontal',
+          );
+          wrapper.style.width = `${info.total * cellSize}px`;
+          wrapper.style.height = `${cellSize}px`;
+          wrapper.innerHTML = SHIP_SVGS[cell.shipName];
+          td.appendChild(wrapper);
+          td.classList.add('cell--ship-origin');
+        }
       }
 
       if (onCellClick) {
