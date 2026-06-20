@@ -380,7 +380,7 @@ body {
   pointer-events: none;
 }
 
-.cell--hit > span {
+.cell--hit > span:not(.sr-only) {
   position: relative;
   z-index: 3;
 }
