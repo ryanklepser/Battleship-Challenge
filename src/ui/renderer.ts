@@ -171,15 +171,6 @@ export function renderBoard(
           overlay.classList.add('cell-hit-overlay');
           overlay.setAttribute('aria-hidden', 'true');
           td.appendChild(overlay);
-          const emoji = document.createElement('span');
-          emoji.setAttribute('aria-hidden', 'true');
-          emoji.textContent = '💥';
-          td.appendChild(emoji);
-          const icon = document.createElement('span');
-          icon.classList.add('cell-icon', 'cell-icon--hit');
-          icon.setAttribute('aria-hidden', 'true');
-          icon.textContent = '✕';
-          td.appendChild(icon);
           const sr = document.createElement('span');
           sr.classList.add('sr-only');
           sr.textContent = 'Hit';
