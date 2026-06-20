@@ -180,10 +180,6 @@ export function renderBoard(
           icon.setAttribute('aria-hidden', 'true');
           icon.textContent = '✕';
           td.appendChild(icon);
-          const sr = document.createElement('span');
-          sr.classList.add('sr-only');
-          sr.textContent = 'Hit';
-          td.appendChild(sr);
           break;
         }
         case 'miss': {
