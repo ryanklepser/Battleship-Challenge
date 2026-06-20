@@ -308,6 +308,8 @@ body {
   font-weight: bold;
   font-size: 0.9rem;
   color: #fff;
+  position: relative;
+  z-index: 2;
 }
 
 .cell-icon--miss {
