@@ -145,6 +145,25 @@ export function renderBoard(
         td.classList.add('cell--reveal');
         td.style.animationDelay = `${(row + col) * 10}ms`;
       }
+
+      // Render ship shape FIRST so hit/miss indicators paint on top
+      if (!hideShips && cell.shipName && ships) {
+        const info = getShipCellIndex(ships, cell.shipName, row, col);
+        if (info && info.index === 0 && SHIP_SVGS[cell.shipName]) {
+          const wrapper = document.createElement('div');
+          wrapper.classList.add('ship-shape');
+          wrapper.setAttribute('aria-hidden', 'true');
+          wrapper.classList.add(
+            info.orientation === 'vertical' ? 'ship-shape--vertical' : 'ship-shape--horizontal',
+          );
+          wrapper.style.width = `${info.total * cellSize}px`;
+          wrapper.style.height = `${cellSize}px`;
+          wrapper.innerHTML = SHIP_SVGS[cell.shipName];
+          td.appendChild(wrapper);
+          td.classList.add('cell--ship-origin');
+        }
+      }
+
       switch (cell.state) {
         case 'hit': {
           td.classList.add('cell--hit');
@@ -192,24 +211,6 @@ export function renderBoard(
           break;
         case 'empty':
           break;
-      }
-
-      // Render ship shape on the first cell of each ship, regardless of hit state
-      if (!hideShips && cell.shipName && ships) {
-        const info = getShipCellIndex(ships, cell.shipName, row, col);
-        if (info && info.index === 0 && SHIP_SVGS[cell.shipName]) {
-          const wrapper = document.createElement('div');
-          wrapper.classList.add('ship-shape');
-          wrapper.setAttribute('aria-hidden', 'true');
-          wrapper.classList.add(
-            info.orientation === 'vertical' ? 'ship-shape--vertical' : 'ship-shape--horizontal',
-          );
-          wrapper.style.width = `${info.total * cellSize}px`;
-          wrapper.style.height = `${cellSize}px`;
-          wrapper.innerHTML = SHIP_SVGS[cell.shipName];
-          td.appendChild(wrapper);
-          td.classList.add('cell--ship-origin');
-        }
       }
 
       if (onCellClick) {
