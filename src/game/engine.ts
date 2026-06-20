@@ -200,7 +200,7 @@ export async function aiAttack(
 
   await delay(600);
 
-  const target = getAIMove(state.playerBoard, state.difficulty);
+  const target = getAIMove(state.playerBoard, state.difficulty, state.playerShips);
   const cell = state.playerBoard[target.row][target.col];
   const result = attack(state.playerBoard, state.playerShips, target);
   state.stats.aiShotsFired++;
