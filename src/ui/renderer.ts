@@ -167,6 +167,10 @@ export function renderBoard(
       switch (cell.state) {
         case 'hit': {
           td.classList.add('cell--hit');
+          const overlay = document.createElement('div');
+          overlay.classList.add('cell-hit-overlay');
+          overlay.setAttribute('aria-hidden', 'true');
+          td.appendChild(overlay);
           const emoji = document.createElement('span');
           emoji.setAttribute('aria-hidden', 'true');
           emoji.textContent = '💥';
